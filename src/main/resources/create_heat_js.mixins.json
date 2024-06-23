@@ -1,0 +1,21 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "com.xiaohunao.createheatjs.mixin",
+  "compatibilityLevel": "JAVA_17",
+  "refmap": "create_heat_js.refmap.json",
+  "mixins": [
+    "BasinCategoryMixin",
+    "BasinRecipeMixin",
+    "HeatConditionMixin",
+    "HeatLevelMixin",
+    "MixingCategoryMixin",
+    "PackingCategoryMixin",
+    "ProcessingRecipeJSMixin"
+  ],
+  "client": [
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}
