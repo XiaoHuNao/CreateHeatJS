@@ -5,7 +5,6 @@ import com.simibubi.create.compat.jei.category.PackingCategory;
 import com.simibubi.create.compat.jei.category.animations.AnimatedPress;
 import com.simibubi.create.content.processing.basin.BasinRecipe;
 import com.simibubi.create.content.processing.recipe.HeatCondition;
-import com.xiaohunao.createheatjs.CreateHeatJS;
 import com.xiaohunao.createheatjs.util.BlockHelper;
 import mezz.jei.api.gui.ingredient.IRecipeSlotsView;
 import net.minecraft.client.gui.GuiGraphics;

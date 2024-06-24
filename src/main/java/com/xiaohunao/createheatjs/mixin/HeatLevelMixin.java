@@ -1,8 +1,6 @@
 package com.xiaohunao.createheatjs.mixin;
 
-import com.mojang.datafixers.util.Pair;
 import com.simibubi.create.content.processing.burner.BlazeBurnerBlock.HeatLevel;
-import com.simibubi.create.content.processing.recipe.HeatCondition;
 import com.xiaohunao.createheatjs.CreateHeatJS;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
@@ -15,7 +13,6 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Map;
 
 @Mixin(value = HeatLevel.class, remap = false)
 public abstract class HeatLevelMixin {
@@ -30,18 +27,6 @@ public abstract class HeatLevelMixin {
     }
     @Inject(method = "<clinit>", at = @At("TAIL"))
     private static void clinit(CallbackInfo ci) {
-//        HeatManager manager = CreateHeatJS.Manager;
-//        Map<String, Pair<Integer, Integer>> heatLevels = manager.getHeatLevels();
-//        heatLevels.forEach((heatLevel, pair) -> {
-//            Integer prior = pair.getFirst();
-//            manager.registerHeatLevel(heatLevel,heatExpansion$addVariant(heatLevel));
-//            manager.registerHeatLevelPrior(heatLevel,prior);
-//        });
-//        manager.registerHeatLevelPrior(HeatLevel.NONE.name(),-1);
-//        manager.registerHeatLevelPrior(HeatLevel.SMOULDERING.name(),0);
-//        manager.registerHeatLevelPrior(HeatLevel.FADING.name(),1);
-//        manager.registerHeatLevelPrior(HeatLevel.KINDLED.name(),1);
-//        manager.registerHeatLevelPrior(HeatLevel.SEETHING.name(),2);
         CreateHeatJS.heatDataMap.forEach((condition, heatData) -> {
             HeatLevel heatLevel = heatExpansion$addVariant(condition);
             heatData.setHeatLevel(heatLevel);

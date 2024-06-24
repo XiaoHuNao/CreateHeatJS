@@ -11,8 +11,8 @@ import net.minecraftforge.common.util.TriPredicate;
 import org.apache.commons.compress.utils.Lists;
 
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.Map;
-import java.util.function.Predicate;
 
 public class HeatData {
     private final String name;
@@ -40,6 +40,16 @@ public class HeatData {
             return CreateHeatJS.heatDataMap.get(BlazeBurnerBlock.HeatLevel.SEETHING.toString());
         }
         return CreateHeatJS.heatDataMap.get(heatLevel);
+    }
+
+    public static Collection<HeatData> getHeatDataByPriority(int prior){
+        Collection<HeatData> heatDataList = Lists.newArrayList();
+        CreateHeatJS.heatDataMap.forEach((level, heatData) -> {
+            if (heatData.getPrior() >= prior){
+                heatDataList.add(heatData);
+            }
+        });
+        return heatDataList.stream().sorted(Comparator.comparingInt(HeatData::getPrior)).toList();
     }
 
     public String getName() {

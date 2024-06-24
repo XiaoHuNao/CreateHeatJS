@@ -1,9 +1,7 @@
 package com.xiaohunao.createheatjs.mixin;
 
-import com.mojang.datafixers.util.Pair;
 import com.simibubi.create.content.processing.basin.BasinBlockEntity;
 import com.simibubi.create.content.processing.basin.BasinRecipe;
-import com.xiaohunao.createheatjs.CreateHeatJS;
 import com.xiaohunao.createheatjs.HeatData;
 import com.xiaohunao.createheatjs.util.BlockHelper;
 import net.minecraft.core.BlockPos;
@@ -14,7 +12,6 @@ import net.minecraft.world.item.crafting.Recipe;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraftforge.common.util.TriPredicate;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -39,17 +36,9 @@ public class BasinRecipeMixin {
             if (recipe instanceof BasinRecipe basinRecipe){
                 String heatCondition = basinRecipe.getRequiredHeat().toString();
                 HeatData heatData = HeatData.getHeatData(heatCondition);
-//                for (Pair<String, TriPredicate<Level, BlockPos, BlockState>> pair : manager.getHeatSource(heatCondition)) {
-////                    BlockState state = BlockHelper.parseBlockState(pair.getFirst());
-//                    if (pair.getSecond().test(level, blockPos, blockState)) {
-//                        return;
-//                    }
-//                    cir.setReturnValue(false);
-//                }
-                heatData.getHeatSource().forEach((stack, predicate) -> {
-//                    TagKey
-                    String stackFirst = stack.getFirst();
 
+                heatData.getHeatSource().forEach((stack, predicate) -> {
+                    String stackFirst = stack.getFirst();
                     TagKey<Block> blockTagKey = TagKey.create(Registries.BLOCK, ResourceLocation.tryParse(stackFirst));
                     if(stackFirst.equals("*") || blockState.is(blockTagKey) || blockState.is(BlockHelper.parseBlockState(stackFirst).getBlock())){
                         if (predicate.test(level, blockPos, blockState)) {

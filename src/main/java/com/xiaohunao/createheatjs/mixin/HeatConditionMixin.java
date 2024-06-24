@@ -1,6 +1,5 @@
 package com.xiaohunao.createheatjs.mixin;
 
-import com.mojang.datafixers.util.Pair;
 import com.simibubi.create.content.processing.burner.BlazeBurnerBlock;
 import com.simibubi.create.content.processing.recipe.HeatCondition;
 import com.xiaohunao.createheatjs.CreateHeatJS;
@@ -13,7 +12,6 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Map;
 
 @Mixin(value = HeatCondition.class, remap = false)
 public abstract class HeatConditionMixin {
@@ -30,12 +28,6 @@ public abstract class HeatConditionMixin {
     }
     @Inject(method = "<clinit>", at = @At("TAIL"))
     private static void clinit(CallbackInfo ci) {
-//        HeatManager manager = CreateHeatJS.Manager;
-//        Map<String, Pair<Integer,Integer>> heatLevels = manager.getHeatLevels();
-//        heatLevels.forEach((condition, pair) -> {
-//            Integer color = pair.getSecond();
-//            manager.registerHeatCondition(condition,heatExpansion$addVariant(condition, color));
-//        });
         CreateHeatJS.heatDataMap.forEach((condition, heatData) -> {
             HeatCondition heatCondition = heatExpansion$addVariant(condition, heatData.getColor());
             heatData.setHeatCondition(heatCondition);

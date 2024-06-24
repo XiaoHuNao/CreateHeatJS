@@ -196,23 +196,20 @@ dependencies {
     implementation fg.deobf("dev.architectury:architectury-forge:${architectury_version}")
 
 
-
-
     compileOnly fg.deobf("mezz.jei:jei-${minecraft_version}-common-api:${jei_version}")
     compileOnly fg.deobf("mezz.jei:jei-${minecraft_version}-forge-api:${jei_version}")
-    // at runtime, use the full JEI jar
     runtimeOnly fg.deobf("mezz.jei:jei-${minecraft_version}-forge:${jei_version}")
 
 
     implementation fg.deobf("curse.maven:kubejs-create-429371:4884096")
 
-    runtimeOnly fg.deobf("curse.maven:probejs-585406:5021484")
-    implementation fg.deobf("curse.maven:powerfuljs-819845:4951461")
 
-    implementation fg.deobf("curse.maven:thermal-foundation-222880:5443583")
-    implementation fg.deobf("curse.maven:thermal-dynamics-227443:5372747")
-    implementation fg.deobf("curse.maven:thermal-expansion-69163:5372749")
-    implementation fg.deobf("curse.maven:cofh-core-69162:5374122")
+    runtimeOnly fg.deobf("curse.maven:probejs-585406:5021484")
+    runtimeOnly fg.deobf("curse.maven:powerfuljs-819845:4951461")
+    runtimeOnly fg.deobf("curse.maven:thermal-foundation-222880:5443583")
+    runtimeOnly fg.deobf("curse.maven:thermal-dynamics-227443:5372747")
+    runtimeOnly fg.deobf("curse.maven:thermal-expansion-69163:5372749")
+    runtimeOnly fg.deobf("curse.maven:cofh-core-69162:5374122")
 
     // Example mod dependency with JEI - using fg.deobf() ensures the dependency is remapped to your development mappings
     // The JEI API is declared for compile time use, while the full JEI artifact is used at runtime

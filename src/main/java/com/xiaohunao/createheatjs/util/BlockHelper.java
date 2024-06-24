@@ -6,7 +6,6 @@ import com.mojang.math.Axis;
 import com.simibubi.create.AllBlocks;
 import com.simibubi.create.compat.jei.category.animations.AnimatedKinetics;
 import com.simibubi.create.content.processing.recipe.HeatCondition;
-import com.xiaohunao.createheatjs.CreateHeatJS;
 import com.xiaohunao.createheatjs.HeatData;
 import dev.latvian.mods.kubejs.util.UtilsJS;
 import mezz.jei.api.gui.drawable.IDrawable;
@@ -22,10 +21,8 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.common.util.TriPredicate;
 import net.minecraftforge.registries.ForgeRegistries;
 
-import java.util.Collection;
 import java.util.Map;
 import java.util.Optional;
-import java.util.function.Predicate;
 
 public class BlockHelper {
     public static BlockState parseBlockState(String string) {
@@ -93,43 +90,5 @@ public class BlockHelper {
                 .render(graphics);
         pose.popPose();
         return true;
-//
-
-
-//        HeatManager manager = CreateHeatJS.Manager;
-//        Collection<Pair<String, TriPredicate<Level, BlockPos, BlockState>>> heatSource = manager.getHeatSource(requiredHeat.toString());
-//        if (heatSource.isEmpty()) return false;
-//
-//
-//        ClientLevel level = Minecraft.getInstance().level;
-//        if (level == null) {
-//            return false;
-//        }
-//        long dayTime = level.getDayTime();
-//
-//        PoseStack pose = graphics.pose();
-//        pose.pushPose();
-//        pose.translate(drawable.getWidth() / 2 + 3, 55, 200);
-//        pose.mulPose(Axis.XP.rotationDegrees(-15.5f));
-//        pose.mulPose(Axis.YP.rotationDegrees(22.5f));
-//        int scale = 23;
-//
-//        int itemIndexToShow = (int) ((dayTime / 25) % (heatSource.size()));
-//        Pair<String, Predicate<BlockState>> pair = heatSource.toArray(new Pair[0])[itemIndexToShow];
-//        if (pair == null) {
-//            return false;
-//        }
-//        BlockState heatBlockState = BlockHelper.parseBlockState(pair.getFirst());
-//        if (heatBlockState == null || heatBlockState.getBlock() == AllBlocks.BLAZE_BURNER.get()){
-//            pose.popPose();
-//            return false;
-//        }
-//        AnimatedKinetics.defaultBlockElement(heatBlockState)
-//                .atLocal(1, 1.65, 1)
-//                .rotate(0, 180, 0)
-//                .scale(scale)
-//                .render(graphics);
-//        pose.popPose();
-//        return true;
     }
 }
