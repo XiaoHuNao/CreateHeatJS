@@ -9,8 +9,7 @@
     "BasinRecipeMixin",
     "HeatConditionMixin",
     "HeatLevelMixin",
-    "MixingCategoryMixin",
-    "PackingCategoryMixin",
+    "MixingAndPackingCategoryMixin",
     "ProcessingRecipeJSMixin"
   ],
   "client": [

@@ -17,7 +17,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-@Mixin(BasinRecipe.class)
+@Mixin(value = BasinRecipe.class, remap = false)
 public class BasinRecipeMixin {
 
     @Inject(method = "apply(Lcom/simibubi/create/content/processing/basin/BasinBlockEntity;Lnet/minecraft/world/item/crafting/Recipe;Z)Z"
@@ -25,9 +25,8 @@ public class BasinRecipeMixin {
             , target = "Lcom/simibubi/create/content/processing/recipe/HeatCondition;testBlazeBurner(Lcom/simibubi/create/content/processing/burner/BlazeBurnerBlock$HeatLevel;)Z"
             , shift = At.Shift.AFTER)
             , cancellable = true
-            , remap = false
     )
-    private static void applyMixin(BasinBlockEntity basin, Recipe<?> recipe, boolean test, CallbackInfoReturnable<Boolean> cir) {
+    private static void createheatjs$checkForCustomHeatLevels(BasinBlockEntity basin, Recipe<?> recipe, boolean test, CallbackInfoReturnable<Boolean> cir) {
         Level level = basin.getLevel();
         if (level != null) {
             BlockPos blockPos = basin.getBlockPos().below(1);

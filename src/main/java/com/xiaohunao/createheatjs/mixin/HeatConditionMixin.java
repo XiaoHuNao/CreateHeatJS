@@ -3,15 +3,18 @@ package com.xiaohunao.createheatjs.mixin;
 import com.simibubi.create.content.processing.burner.BlazeBurnerBlock;
 import com.simibubi.create.content.processing.recipe.HeatCondition;
 import com.xiaohunao.createheatjs.CreateHeatJS;
-import org.spongepowered.asm.mixin.*;
+import com.xiaohunao.createheatjs.HeatData;
+import org.spongepowered.asm.mixin.Final;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Mutable;
+import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.gen.Invoker;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Map;
 
 @Mixin(value = HeatCondition.class, remap = false)
 public abstract class HeatConditionMixin {
@@ -20,32 +23,30 @@ public abstract class HeatConditionMixin {
     @Mutable
     private static HeatCondition[] $VALUES;
 
-    @Shadow public abstract String serialize();
-
     @Invoker("<init>")
-    public static HeatCondition heatExpansion$invokeInit(String internalName, int internalId, int color) {
+    public static HeatCondition createheatjs$invokeInit(String internalName, int internalId, int color) {
         throw new AssertionError();
     }
     @Inject(method = "<clinit>", at = @At("TAIL"))
-    private static void clinit(CallbackInfo ci) {
-        CreateHeatJS.heatDataMap.forEach((condition, heatData) -> {
-            HeatCondition heatCondition = heatExpansion$addVariant(condition, heatData.getColor());
-            heatData.setHeatCondition(heatCondition);
-        });
-    }
+    private static void createheatjs$injectExtraHeatLevels(CallbackInfo ci) {
+        if (CreateHeatJS.heatDataMap.isEmpty()) return;
 
+        int nextIndex = $VALUES.length;
+        HeatCondition[] newValues = new HeatCondition[$VALUES.length + CreateHeatJS.heatDataMap.size()];
+        System.arraycopy($VALUES, 0, newValues, 0, $VALUES.length);
 
-    @Unique
-    private static HeatCondition heatExpansion$addVariant(String internalName, int color) {
-        ArrayList<HeatCondition> variants = new ArrayList<>(Arrays.asList(HeatConditionMixin.$VALUES));
-        HeatCondition heat = heatExpansion$invokeInit(internalName, variants.get(variants.size() - 1).ordinal() + 1, color);
-        variants.add(heat);
-        HeatConditionMixin.$VALUES = variants.toArray(new HeatCondition[0]);
-        return heat;
+        for (Map.Entry<String, HeatData> stringHeatDataEntry : CreateHeatJS.heatDataMap.entrySet()) {
+            HeatData heatData = stringHeatDataEntry.getValue();
+            int index = nextIndex++;
+            HeatCondition heat = createheatjs$invokeInit(stringHeatDataEntry.getKey(), index, heatData.getColor());
+            heatData.setHeatCondition(heat);
+            newValues[index] = heat;
+        }
+        $VALUES = newValues;
     }
 
     @Inject(method = "testBlazeBurner", at = @At("HEAD"), cancellable = true)
-    private void testBlazeBurnerMixin(BlazeBurnerBlock.HeatLevel level, CallbackInfoReturnable<Boolean> cir) {
+    private void createheatjs$testBlazeBurnerMixin(BlazeBurnerBlock.HeatLevel level, CallbackInfoReturnable<Boolean> cir) {
         cir.setReturnValue(true);
     }
 }
