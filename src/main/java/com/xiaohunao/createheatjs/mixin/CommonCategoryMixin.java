@@ -57,6 +57,9 @@ public abstract class CommonCategoryMixin extends BasinCategory {
 
             HeatData heatData = CreateHeatJS.heatDataMapByLevel.get(orDefault);
             List<Block> heatSourceBlocks = heatData.getHeatSourceBlocks();
+            if (heatSourceBlocks.isEmpty()) {
+                return;
+            }
             int itemIndexToShow = (int) ((dayTime / 25) % (heatSourceBlocks.size()));
             Block block = heatSourceBlocks.get(itemIndexToShow);
             animatedHeatSourceBlock.init(orDefault,block).draw(graphics, getBackground().getWidth() / 2 + 3, 55);

@@ -5,7 +5,6 @@ import com.simibubi.create.content.processing.burner.BlazeBurnerBlock;
 import com.simibubi.create.content.processing.recipe.HeatCondition;
 import com.xiaohunao.createheatjs.CreateHeatJS;
 import com.xiaohunao.createheatjs.HeatData;
-import com.xiaohunao.createheatjs.util.HeatSourceUtil;
 import net.minecraft.world.level.block.Block;
 import net.minecraftforge.registries.ForgeRegistries;
 import org.spongepowered.asm.mixin.*;
@@ -17,6 +16,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Locale;
 
 
@@ -45,7 +45,6 @@ public abstract class HeatConditionMixin {
     @Inject(method = "<clinit>", at = @At("TAIL"))
     private static void createheatjs$injectExtraHeatLevels(CallbackInfo ci) {
         createHeatJS$initHeatCondition();
-        createHeatJS$manualInitHeatCondition();
     }
     @Inject(method = "visualizeAsBlazeBurner", at = @At("HEAD"), cancellable = true)
     private void createheatjs$visualizeAsBlazeBurnerMixin(CallbackInfoReturnable<BlazeBurnerBlock.HeatLevel> cir) {
@@ -94,18 +93,14 @@ public abstract class HeatConditionMixin {
             block.getStateDefinition().getPossibleStates().forEach(blockState -> {
                 if (blockState.hasProperty(BlazeBurnerBlock.HEAT_LEVEL)) {
                     BlazeBurnerBlock.HeatLevel level = blockState.getValue(BlazeBurnerBlock.HEAT_LEVEL);
-
-                    HeatData heatData = CreateHeatJS.heatDataMapByLevel.get(level);
-                    heatData.addHeatSource(block,blockState);
+                    List<String> heatLevel = List.of("NONE", "SMOULDERING", "FADING", "KINDLED", "SEETHING");
+                    if (heatLevel.contains(level.getSerializedName().toUpperCase(Locale.ROOT))) {
+                        HeatData heatData = CreateHeatJS.heatDataMapByLevel.get(level);
+                        heatData.addHeatSource(block,blockState);
+                    }
                 }
             });
         });
     }
-
-    @Unique
-    private static void createHeatJS$manualInitHeatCondition(){
-        CreateHeatJS.heatDataMap.forEach(HeatSourceUtil::manualInitHeatSource);
-    }
-
 
 }

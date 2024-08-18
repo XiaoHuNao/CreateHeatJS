@@ -5,9 +5,16 @@ import com.negodya1.vintageimprovements.compat.jei.category.VacuumizingCategory;
 import com.simibubi.create.compat.jei.category.BasinCategory;
 import com.simibubi.create.compat.jei.category.CreateRecipeCategory;
 import com.simibubi.create.content.processing.basin.BasinRecipe;
+import com.simibubi.create.content.processing.burner.BlazeBurnerBlock;
+import com.simibubi.create.content.processing.recipe.HeatCondition;
 import com.xiaohunao.createheatjs.CreateHeatJS;
+import com.xiaohunao.createheatjs.HeatData;
 import mezz.jei.api.gui.builder.IRecipeLayoutBuilder;
+import mezz.jei.api.gui.ingredient.IRecipeSlotsView;
 import mezz.jei.api.recipe.IFocusGroup;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.network.chat.Component;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -40,8 +47,23 @@ public abstract class BasinCategoryMixin extends CreateRecipeCategory<BasinRecip
             cancellable = true
     )
     private void createheatjs$cancelLOWHeatLevelIngredients(IRecipeLayoutBuilder builder, BasinRecipe recipe, IFocusGroup focuses, CallbackInfo ci) {
-        if (CreateHeatJS.LOW_ACTIVE){
+        if (CreateHeatJS.LOW_ACTIVE) {
             ci.cancel();
+        }
+    }
+
+    @Inject(method = "draw(Lcom/simibubi/create/content/processing/basin/BasinRecipe;Lmezz/jei/api/gui/ingredient/IRecipeSlotsView;Lnet/minecraft/client/gui/GuiGraphics;DD)V",
+            at = @At(value = "RETURN")
+    )
+    private void createheatjs$drawJEITip(BasinRecipe recipe, IRecipeSlotsView slots, GuiGraphics graphics, double mouseX, double mouseY, CallbackInfo ci) {
+        HeatCondition heatCondition = recipe.getRequiredHeat();
+        BlazeBurnerBlock.HeatLevel orDefault = CreateHeatJS.heatMap.inverse().getOrDefault(heatCondition, null);
+        if (orDefault != null && orDefault != BlazeBurnerBlock.HeatLevel.NONE) {
+            HeatData heatData = CreateHeatJS.heatDataMapByLevel.get(orDefault);
+            if (heatData.hasJeiTip()) {
+                graphics.drawString(Minecraft.getInstance().font, Component.translatable("gui.create.jei.category.basin.heat." + heatCondition.getTranslationKey() + ".title"),
+                        9, 0, heatData.getColor(), false);
+            }
         }
     }
 }

@@ -21,6 +21,7 @@ public class HeatData {
     private BlazeBurnerBlock.HeatLevel heatLevel;
     private HeatCondition condition;
     private Map<Block,HeatSourceData> heatSourceData = Maps.newHashMap();
+    private boolean hasJeiTip = false;
 
 
     public HeatData(String name) {
@@ -107,6 +108,15 @@ public class HeatData {
 
     public HeatCondition getCondition() {
         return condition;
+    }
+
+    public boolean hasJeiTip() {
+        return this.hasJeiTip;
+    }
+
+    public HeatData jeiTip() {
+        this.hasJeiTip = true;
+        return this;
     }
 
     public static class HeatSourceData {

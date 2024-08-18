@@ -46,6 +46,9 @@ public abstract class HeatLevelMixin {
         });
 
         for (BlazeBurnerBlock.HeatLevel level : $VALUES) {
+            if (CreateHeatJS.heatDataMapByLevel.containsKey(level)) {
+                continue;
+            }
             HeatData heatData = new HeatData(level.getSerializedName());
             heatData.setHeatLevel(level).register();
             CreateHeatJS.heatDataMapByLevel.put(level,heatData);
