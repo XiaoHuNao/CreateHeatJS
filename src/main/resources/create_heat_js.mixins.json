@@ -7,10 +7,16 @@
   "mixins": [
     "BasinCategoryMixin",
     "BasinRecipeMixin",
+    "CommonCategoryMixin",
     "HeatConditionMixin",
     "HeatLevelMixin",
-    "MixingAndPackingCategoryMixin",
-    "ProcessingRecipeJSMixin"
+    "ProcessingRecipeJSMixin",
+    "category.AlloyingCategoryMixin",
+    "category.MeltingCategoryMixin",
+    "category.MixingCategoryMixin",
+    "category.PackingCategoryMixin",
+    "category.PressurizingCategoryMixin",
+    "category.VacuumizingCategoryMixin"
   ],
   "client": [
   ],

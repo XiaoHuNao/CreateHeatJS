@@ -1,45 +1,56 @@
 package com.xiaohunao.createheatjs.mixin;
 
-import com.simibubi.create.content.processing.burner.BlazeBurnerBlock.HeatLevel;
+import com.simibubi.create.content.processing.burner.BlazeBurnerBlock;
 import com.xiaohunao.createheatjs.CreateHeatJS;
 import com.xiaohunao.createheatjs.HeatData;
-import org.spongepowered.asm.mixin.Final;
-import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Mutable;
-import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.*;
 import org.spongepowered.asm.mixin.gen.Invoker;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-import java.util.Map;
+import java.util.ArrayList;
+import java.util.Arrays;
 
-@Mixin(value = HeatLevel.class, remap = false)
+@Mixin(value = BlazeBurnerBlock.HeatLevel.class, remap = false ,priority = 2000)
 public abstract class HeatLevelMixin {
     @Shadow
     @Final
     @Mutable
-    private static HeatLevel[] $VALUES;
+    private static BlazeBurnerBlock.HeatLevel[] $VALUES;
 
     @Invoker("<init>")
-    public static HeatLevel createheatjs$invokeInit(String internalName, int internalId) {
+    public static BlazeBurnerBlock.HeatLevel createheatjs$invokeInit(String internalName, int internalId) {
         throw new AssertionError();
     }
+
     @Inject(method = "<clinit>", at = @At("TAIL"))
     private static void createheatjs$injectExtraHeatLevels(CallbackInfo ci) {
-        if (CreateHeatJS.heatDataMap.isEmpty()) return;
-
-        int nextIndex = $VALUES.length;
-        HeatLevel[] newValues = new HeatLevel[$VALUES.length + CreateHeatJS.heatDataMap.size()];
-        System.arraycopy($VALUES, 0, newValues, 0, $VALUES.length);
-
-        for (Map.Entry<String, HeatData> stringHeatDataEntry : CreateHeatJS.heatDataMap.entrySet()) {
-            int index = nextIndex++;
-            HeatLevel heat = createheatjs$invokeInit(stringHeatDataEntry.getKey(), index);
-            stringHeatDataEntry.getValue().setHeatLevel(heat);
-            newValues[index] = heat;
-        }
-        $VALUES = newValues;
+        createHeatJS$initHeatLevel();
     }
+
+    private static BlazeBurnerBlock.HeatLevel heatExpansion$addVariant(String internalName) {
+        ArrayList<BlazeBurnerBlock.HeatLevel> variants = new ArrayList<>(Arrays.asList(HeatLevelMixin.$VALUES));
+        BlazeBurnerBlock.HeatLevel heat = createheatjs$invokeInit(internalName, variants.get(variants.size() - 1).ordinal() + 1);
+        variants.add(heat);
+        HeatLevelMixin.$VALUES = variants.toArray(new BlazeBurnerBlock.HeatLevel[0]);
+        return heat;
+    }
+
+    @Unique
+    private static void createHeatJS$initHeatLevel(){
+        CreateHeatJS.heatDataMap.forEach((name,heatData) -> {
+            BlazeBurnerBlock.HeatLevel level = heatExpansion$addVariant(name);
+            heatData.setHeatLevel(level);
+            CreateHeatJS.heatDataMapByLevel.put(level,heatData);
+        });
+
+        for (BlazeBurnerBlock.HeatLevel level : $VALUES) {
+            HeatData heatData = new HeatData(level.getSerializedName());
+            heatData.setHeatLevel(level).register();
+            CreateHeatJS.heatDataMapByLevel.put(level,heatData);
+        }
+    }
+
 
 }

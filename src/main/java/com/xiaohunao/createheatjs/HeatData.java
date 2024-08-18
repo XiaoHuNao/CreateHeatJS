@@ -1,108 +1,98 @@
 package com.xiaohunao.createheatjs;
 
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import com.mojang.datafixers.util.Pair;
 import com.simibubi.create.content.processing.burner.BlazeBurnerBlock;
 import com.simibubi.create.content.processing.recipe.HeatCondition;
 import net.minecraft.core.BlockPos;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.common.util.TriPredicate;
-import org.apache.commons.compress.utils.Lists;
 
-import java.util.Collection;
-import java.util.Comparator;
+import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 public class HeatData {
     private final String name;
-    private final int prior;
-    private final int color;
-    private Map<Pair<String,String>,TriPredicate<Level, BlockPos, BlockState>> heatSource = Maps.newHashMap();
-    private boolean jeiTip = false;
-    private HeatCondition heatCondition;
+    private int color = 0xff0000;
     private BlazeBurnerBlock.HeatLevel heatLevel;
+    private HeatCondition condition;
+    private Map<Block,HeatSourceData> heatSourceData = Maps.newHashMap();
 
-    private HeatData(String name, int prior, int color) {
+
+    public HeatData(String name) {
         this.name = name;
-        this.prior = prior;
+    }
+
+    public HeatData(String name, int color) {
+        this.name = name;
         this.color = color;
     }
-
-    public static HeatData getHeatData(String heatLevel){
-        if (heatLevel.equals(HeatCondition.NONE.toString())){
-            return CreateHeatJS.heatDataMap.get(BlazeBurnerBlock.HeatLevel.NONE.toString());
+    public HeatData removeHeatSource(Block block) {
+        this.heatSourceData.remove(block);
+        return this;
+    }
+    public HeatData addHeatSource(Block block) {
+        if (this.heatSourceData.containsKey(block)) {
+            this.heatSourceData.get(block);
+        }else {
+            this.heatSourceData.put(block, new HeatSourceData());
         }
-        if (heatLevel.equals(HeatCondition.HEATED.toString())){
-            return CreateHeatJS.heatDataMap.get(BlazeBurnerBlock.HeatLevel.KINDLED.toString());
+        return this;
+    }
+    public HeatData addHeatSource(Block block, BlockState... states) {
+        if (this.heatSourceData.containsKey(block)) {
+            this.heatSourceData.get(block).addState(states);
+        }else {
+            this.heatSourceData.put(block, new HeatSourceData().setStates(states));
         }
-        if (heatLevel.equals(HeatCondition.SUPERHEATED.toString())){
-            return CreateHeatJS.heatDataMap.get(BlazeBurnerBlock.HeatLevel.SEETHING.toString());
+        return this;
+    }
+    public HeatData addHeatSource(Block block, TriPredicate<Level, BlockPos, BlockState> predicate) {
+        if (this.heatSourceData.containsKey(block)) {
+            this.heatSourceData.get(block).setPredicate(predicate);
+        }else {
+            this.heatSourceData.put(block, new HeatSourceData().setPredicate(predicate));
         }
-        return CreateHeatJS.heatDataMap.get(heatLevel);
+        return this;
     }
 
-    public static Collection<HeatData> getHeatDataByPriority(int prior){
-        Collection<HeatData> heatDataList = Lists.newArrayList();
-        CreateHeatJS.heatDataMap.forEach((level, heatData) -> {
-            if (heatData.getPrior() >= prior){
-                heatDataList.add(heatData);
-            }
-        });
-        return heatDataList.stream().sorted(Comparator.comparingInt(HeatData::getPrior)).toList();
+    public Map<Block, HeatSourceData> getHeatSourceData() {
+        return heatSourceData;
+    }
+
+    public List<ItemStack> getHeatSourceStacks() {
+        return heatSourceData.keySet().stream().map(block -> block.asItem().getDefaultInstance()).toList();
+    }
+    public List<Block> getHeatSourceBlocks() {
+        return Lists.newArrayList(heatSourceData.keySet());
+    }
+    public List<BlockState> getHeatSourceStates(Block block) {
+        return heatSourceData.get(block).getStates();
     }
 
     public String getName() {
         return name;
     }
 
-    public int getPrior() {
-        return prior;
-    }
-
     public int getColor() {
         return color;
     }
 
-    public Map<Pair<String,String>, TriPredicate<Level, BlockPos, BlockState>> getHeatSource() {
-        return heatSource;
-    }
-    public TriPredicate<Level, BlockPos, BlockState> getHeatSource(String blockState) {
-        return heatSource.get(blockState);
-    }
-
-    public HeatData setHeatSource(Map<Pair<String,String>, TriPredicate<Level, BlockPos, BlockState>> blockStates) {
-        this.heatSource = blockStates;
-        return this;
-    }
-    public HeatData addHeatSource(String block,String jeiBlockStack, TriPredicate<Level, BlockPos, BlockState> predicate) {
-        heatSource.put(new Pair<>(block,jeiBlockStack),predicate);
-        return this;
-    }
-    public HeatData addHeatSource(String block,TriPredicate<Level, BlockPos, BlockState> predicate) {
-        addHeatSource(block,block,predicate);
-        return this;
-    }
-    public HeatData addHeatSource(String block,String jeiBlockStack) {
-        addHeatSource(block,jeiBlockStack,(level, pos, blockState) -> true);
-        return this;
-    }
-    public HeatData addHeatSource(String block) {
-        addHeatSource(block,block);
+    public HeatData setColor(int color) {
+        this.color = color;
         return this;
     }
 
-    public boolean isJeiTip() {
-        return jeiTip;
+    public void register() {
+        CreateHeatJS.heatDataMap.put(name.toLowerCase(Locale.ROOT),this);
     }
 
-    public HeatData setJeiTip(boolean jeiTip) {
-        this.jeiTip = jeiTip;
-        return this;
-    }
-
-    public HeatData srtJeiTip(boolean jeiTip) {
-        this.jeiTip = jeiTip;
+    public HeatData setHeatLevel(BlazeBurnerBlock.HeatLevel level) {
+        this.heatLevel = level;
         return this;
     }
 
@@ -110,46 +100,44 @@ public class HeatData {
         return heatLevel;
     }
 
-    public HeatData setHeatLevel(BlazeBurnerBlock.HeatLevel heatLevel) {
-        this.heatLevel = heatLevel;
+    public HeatData setHeatCondition(HeatCondition condition) {
+        this.condition = condition;
         return this;
     }
 
-    public HeatCondition getHeatCondition() {
-        return heatCondition;
+    public HeatCondition getCondition() {
+        return condition;
     }
 
-    public HeatData setHeatCondition(HeatCondition heatCondition) {
-        this.heatCondition = heatCondition;
-        return this;
-    }
-    public static class Builder {
-        private final HeatData heatData;
+    public static class HeatSourceData {
+        private List<BlockState> states = Lists.newArrayList();
+        private TriPredicate<Level, BlockPos, BlockState> predicate;
 
-        public Builder(String name, int prior, int color) {
-            heatData = new HeatData(name,prior,color);
+        public List<BlockState> getStates() {
+            return states;
         }
 
-        public HeatData register() {
-            CreateHeatJS.heatDataMap.put(heatData.name,heatData);
-            return heatData;
+        public TriPredicate<Level, BlockPos, BlockState> getPredicate() {
+            return predicate;
         }
 
-        public Builder addHeatSource(String block,String jeiBlockStack, TriPredicate<Level, BlockPos, BlockState> predicate) {
-            heatData.heatSource.put(new Pair<>(block,jeiBlockStack),predicate);
+        public HeatSourceData setStates(List<BlockState> states) {
+            this.states = states;
             return this;
         }
-        public Builder addHeatSource(String block,TriPredicate<Level, BlockPos, BlockState> predicate) {
-            addHeatSource(block,block,predicate);
+        public HeatSourceData setStates(BlockState... states) {
+            this.states = Lists.newArrayList(states);
             return this;
         }
-        public Builder addHeatSource(String block) {
-            addHeatSource(block,block,(level, pos, blockState) -> true);
+        public HeatSourceData addState(BlockState state) {
+            this.states.add(state);
             return this;
         }
-
-        public Builder jeiTip() {
-            heatData.setJeiTip(true);
+        public void addState(BlockState... states) {
+            this.states.addAll(Lists.newArrayList(states));
+        }
+        public HeatSourceData setPredicate(TriPredicate<Level, BlockPos, BlockState> predicate) {
+            this.predicate = predicate;
             return this;
         }
     }

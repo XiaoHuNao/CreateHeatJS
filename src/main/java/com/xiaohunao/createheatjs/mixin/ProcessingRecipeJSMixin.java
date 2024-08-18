@@ -1,6 +1,5 @@
 package com.xiaohunao.createheatjs.mixin;
 
-
 import com.simibubi.create.content.processing.recipe.HeatCondition;
 import dev.latvian.mods.kubejs.create.ProcessingRecipeSchema;
 import dev.latvian.mods.kubejs.recipe.RecipeJS;

@@ -1,18 +1,27 @@
 package com.xiaohunao.createheatjs.event;
 
+import com.simibubi.create.content.processing.burner.BlazeBurnerBlock;
 import com.xiaohunao.createheatjs.CreateHeatJS;
 import com.xiaohunao.createheatjs.HeatData;
 import dev.latvian.mods.kubejs.event.EventJS;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.common.util.TriPredicate;
 
 public class registerHeatEvent extends EventJS {
-    public HeatData.Builder registerHeat(String level, int prior, int color) {
-        return new HeatData.Builder(level,prior,color);
+    public HeatData registerHeat(String name,int color) {
+        return new HeatData(name, color);
     }
-    private void addHeatSource(String name,String block, TriPredicate<Level, BlockPos, BlockState> predicate) {
-        CreateHeatJS.heatDataMap.get(name).addHeatSource(block,predicate);
+
+    public HeatData addHeatSource(BlazeBurnerBlock.HeatLevel heatLevel, Block block) {
+        return CreateHeatJS.heatDataMapByLevel.get(heatLevel).addHeatSource(block);
+    }
+    public HeatData addHeatSource(BlazeBurnerBlock.HeatLevel heatLevel, Block block, TriPredicate<Level, BlockPos, BlockState> predicate) {
+        return CreateHeatJS.heatDataMapByLevel.get(heatLevel).addHeatSource(block, predicate);
+    }
+    public HeatData addHeatSource(BlazeBurnerBlock.HeatLevel heatLevel, Block block, BlockState... states) {
+        return CreateHeatJS.heatDataMapByLevel.get(heatLevel).addHeatSource(block, states);
     }
 }
