@@ -36,11 +36,16 @@ public class BasinRecipeMixin {
                 HeatData recipeHeatData = CreateHeatJS.heatDataMapByLevel.get(recipeHeatHeatLevel);
                 recipeHeatData.getHeatSourceData().forEach((block, heatSourceData) -> {
                     if (heatSourceData.getStates().contains(blockState)) {
+                        if (heatSourceData.getPredicate() != null) {
+                            if (heatSourceData.getPredicate().test(level, blockPos, blockState)) {
+                                return;
+                            }else {
+                                cir.setReturnValue(false);
+                            }
+                        }
                         return;
                     }
-                    if (heatSourceData.getPredicate() != null && heatSourceData.getPredicate().test(level, blockPos, blockState)) {
-                        return;
-                    }
+
                 });
             }
         }

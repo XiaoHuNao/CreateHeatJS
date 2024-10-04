@@ -41,7 +41,7 @@ ServerEvents.recipes((event) => {
 const $AbstractFurnaceBlock = Java.loadClass("net.minecraft.world.level.block.AbstractFurnaceBlock");
 
 CreateHeatJS.registerHeatEvent((event) => {
-    event.registerHeat("BLAZE", 3, 0xed9c33)
+    event.registerHeat("BLAZE", 0xed9c33)
         .addHeatSource("minecraft:furnace","minecraft:furnace[lit=true]",(level,pos,blockStack) => {
             if (blockStack.hasProperty($AbstractFurnaceBlock.LIT)) {
                 return blockStack.getValue($AbstractFurnaceBlock.LIT).booleanValue();

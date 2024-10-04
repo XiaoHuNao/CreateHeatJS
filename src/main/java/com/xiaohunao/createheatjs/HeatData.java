@@ -1,7 +1,6 @@
 package com.xiaohunao.createheatjs;
 
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
+import com.google.common.collect.*;
 import com.simibubi.create.content.processing.burner.BlazeBurnerBlock;
 import com.simibubi.create.content.processing.recipe.HeatCondition;
 import net.minecraft.core.BlockPos;
@@ -149,6 +148,10 @@ public class HeatData {
         public HeatSourceData setPredicate(TriPredicate<Level, BlockPos, BlockState> predicate) {
             this.predicate = predicate;
             return this;
+        }
+
+        public void addState(ImmutableList<BlockState> possibleStates) {
+            this.states.addAll(possibleStates);
         }
     }
 }

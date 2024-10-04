@@ -5,6 +5,7 @@
   "compatibilityLevel": "JAVA_17",
   "refmap": "create_heat_js.refmap.json",
   "mixins": [
+    "BasinBlockEntityMixin",
     "BasinCategoryMixin",
     "BasinRecipeMixin",
     "CommonCategoryMixin",

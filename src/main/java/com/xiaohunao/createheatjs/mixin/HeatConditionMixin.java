@@ -1,6 +1,9 @@
 package com.xiaohunao.createheatjs.mixin;
 
 
+import com.google.common.collect.BiMap;
+import com.simibubi.create.AllBlocks;
+import com.simibubi.create.content.processing.basin.BasinRecipe;
 import com.simibubi.create.content.processing.burner.BlazeBurnerBlock;
 import com.simibubi.create.content.processing.recipe.HeatCondition;
 import com.xiaohunao.createheatjs.CreateHeatJS;
@@ -14,10 +17,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Locale;
+import java.util.*;
 
 
 @Mixin(value = HeatCondition.class, remap = false, priority = 2000)
@@ -65,39 +65,46 @@ public abstract class HeatConditionMixin {
 
 
     @Unique
-    private static void createHeatJS$initHeatCondition(){
+    private static void createHeatJS$initHeatCondition() {
         for (HeatCondition condition : $VALUES) {
             int color = condition.getColor();
             BlazeBurnerBlock.HeatLevel level = condition.visualizeAsBlazeBurner();
-            if (condition != HeatCondition.NONE && level == BlazeBurnerBlock.HeatLevel.NONE){
+            if (condition != HeatCondition.NONE && level == BlazeBurnerBlock.HeatLevel.NONE) {
                 continue;
             }
             HeatData heatData = CreateHeatJS.heatDataMap.get(level.getSerializedName());
             heatData.setHeatCondition(condition).setColor(color).register();
-            CreateHeatJS.heatMap.put(level,condition);
+            CreateHeatJS.heatMap.put(level, condition);
         }
 
-        CreateHeatJS.heatDataMapByLevel.forEach((heatLevel,heatData) -> {
+        CreateHeatJS.heatDataMapByLevel.forEach((heatLevel, heatData) -> {
             HeatCondition condition = heatData.getCondition();
             if (condition == null) {
-                HeatCondition heatCondition = heatExpansion$addVariant(heatData.getName().toUpperCase(Locale.ROOT),heatData.getColor());
+                HeatCondition heatCondition = heatExpansion$addVariant(heatData.getName().toUpperCase(Locale.ROOT), heatData.getColor());
                 heatData.setHeatCondition(heatCondition).register();
-                CreateHeatJS.heatMap.put(heatLevel,heatCondition);
+                CreateHeatJS.heatMap.put(heatLevel, heatCondition);
             }
         });
 
-
-
         ForgeRegistries.BLOCKS.getEntries().forEach(entry -> {
             Block block = entry.getValue();
-            block.getStateDefinition().getPossibleStates().forEach(blockState -> {
-                if (blockState.hasProperty(BlazeBurnerBlock.HEAT_LEVEL)) {
-                    BlazeBurnerBlock.HeatLevel level = blockState.getValue(BlazeBurnerBlock.HEAT_LEVEL);
-                    List<String> heatLevel = List.of("NONE", "SMOULDERING", "FADING", "KINDLED", "SEETHING");
-                    if (heatLevel.contains(level.getSerializedName().toUpperCase(Locale.ROOT))) {
-                        HeatData heatData = CreateHeatJS.heatDataMapByLevel.get(level);
-                        heatData.addHeatSource(block,blockState);
-                    }
+            CreateHeatJS.heatDataMapByLevel.forEach((heatLevel, heatData) -> {
+                if (block == AllBlocks.BLAZE_BURNER.get()) {
+                    block.getStateDefinition().getPossibleStates().forEach(blockState -> {
+                        if (blockState.hasProperty(BlazeBurnerBlock.HEAT_LEVEL)) {
+                            BlazeBurnerBlock.HeatLevel level = blockState.getValue(BlazeBurnerBlock.HEAT_LEVEL);
+                            List<String> heatLevelStr = List.of("NONE", "SMOULDERING", "FADING", "KINDLED", "SEETHING");
+                            if (heatLevelStr.contains(level.getSerializedName().toUpperCase(Locale.ROOT))) {
+                                HeatData data = CreateHeatJS.heatDataMapByLevel.get(level);
+                                data.addHeatSource(block, blockState);
+                            }
+                        }
+                    });
+                }
+
+                Map<Block, HeatData.HeatSourceData> sourceDataBiMap = heatData.getHeatSourceData();
+                if (sourceDataBiMap.containsKey(block)) {
+                    sourceDataBiMap.get(block).addState(block.getStateDefinition().getPossibleStates());
                 }
             });
         });
