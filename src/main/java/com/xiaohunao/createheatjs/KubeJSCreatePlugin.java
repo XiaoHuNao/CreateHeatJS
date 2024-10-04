@@ -29,17 +29,19 @@ public class KubeJSCreatePlugin extends KubeJSPlugin {
     public void initStartup() {
         REGISTRY_HEAT.post(new registerHeatEvent());
     }
-
     @Override
     public void registerTypeWrappers(ScriptType type, TypeWrappers typeWrappers) {
-        typeWrappers.register(BlockState.class, (TypeWrapperFactory.Simple<BlockState>) o -> {
-            if (o instanceof BlockState) {
-                return (BlockState) o;
+        typeWrappers.register(BlockState.class, new TypeWrapperFactory.Simple<BlockState>() {
+            @Override
+            public BlockState wrapSimple(Object o) {
+                if (o instanceof BlockState) {
+                    return (BlockState) o;
+                }
+                if (o instanceof String) {
+                    return UtilsJS.parseBlockState((String) o);
+                }
+                return null;
             }
-            if (o instanceof String) {
-                return UtilsJS.parseBlockState((String) o);
-            }
-            return null;
         });
     }
 }

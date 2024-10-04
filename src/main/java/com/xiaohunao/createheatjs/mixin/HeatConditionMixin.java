@@ -1,14 +1,13 @@
 package com.xiaohunao.createheatjs.mixin;
 
 
-import com.google.common.collect.BiMap;
-import com.simibubi.create.AllBlocks;
-import com.simibubi.create.content.processing.basin.BasinRecipe;
 import com.simibubi.create.content.processing.burner.BlazeBurnerBlock;
 import com.simibubi.create.content.processing.recipe.HeatCondition;
 import com.xiaohunao.createheatjs.CreateHeatJS;
 import com.xiaohunao.createheatjs.HeatData;
+import com.xiaohunao.createheatjs.util.HeatSourceUtil;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.registries.ForgeRegistries;
 import org.spongepowered.asm.mixin.*;
 import org.spongepowered.asm.mixin.gen.Invoker;
@@ -16,8 +15,11 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
+import zeh.createlowheated.content.processing.basicburner.BasicBurnerBlock;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Locale;
 
 
 @Mixin(value = HeatCondition.class, remap = false, priority = 2000)
@@ -26,7 +28,7 @@ public abstract class HeatConditionMixin {
     @Final
     @Mutable
     private static HeatCondition[] $VALUES;
-    
+
     @Invoker("<init>")
     public static HeatCondition createheatjs$invokeInit(String internalName, int color,int internalId) {
         throw new AssertionError();
@@ -45,6 +47,9 @@ public abstract class HeatConditionMixin {
     @Inject(method = "<clinit>", at = @At("TAIL"))
     private static void createheatjs$injectExtraHeatLevels(CallbackInfo ci) {
         createHeatJS$initHeatCondition();
+        createHeatJS$manualInitHeatCondition();
+        createHeatJS$HeatSourceMap();
+//        HeatSourceUtil.debugHeatSource();
     }
     @Inject(method = "visualizeAsBlazeBurner", at = @At("HEAD"), cancellable = true)
     private void createheatjs$visualizeAsBlazeBurnerMixin(CallbackInfoReturnable<BlazeBurnerBlock.HeatLevel> cir) {
@@ -59,55 +64,74 @@ public abstract class HeatConditionMixin {
         HeatCondition condition = CreateHeatJS.heatMap.getOrDefault(level, null);
         HeatCondition heatCondition = (HeatCondition) (Object) this;
         if (condition != null) {
-            cir.setReturnValue(heatCondition == condition);
+            HeatData heatData = CreateHeatJS.heatDataMapByLevel.get(CreateHeatJS.heatMap.inverse().get(condition));
+            HeatData heatData1 = CreateHeatJS.heatDataMapByLevel.get(CreateHeatJS.heatMap.inverse().get(heatCondition));
+            cir.setReturnValue(heatData.getPriority() >= heatData1.getPriority());
         }
     }
 
 
     @Unique
-    private static void createHeatJS$initHeatCondition() {
+    private static void createHeatJS$initHeatCondition(){
+        // Add default heatCondition
         for (HeatCondition condition : $VALUES) {
             int color = condition.getColor();
             BlazeBurnerBlock.HeatLevel level = condition.visualizeAsBlazeBurner();
-            if (condition != HeatCondition.NONE && level == BlazeBurnerBlock.HeatLevel.NONE) {
+            if (condition != HeatCondition.NONE && level == BlazeBurnerBlock.HeatLevel.NONE){
                 continue;
             }
             HeatData heatData = CreateHeatJS.heatDataMap.get(level.getSerializedName());
             heatData.setHeatCondition(condition).setColor(color).register();
-            CreateHeatJS.heatMap.put(level, condition);
+            CreateHeatJS.heatMap.put(level,condition);
         }
 
-        CreateHeatJS.heatDataMapByLevel.forEach((heatLevel, heatData) -> {
+        CreateHeatJS.heatDataMapByLevel.forEach((heatLevel,heatData) -> {
             HeatCondition condition = heatData.getCondition();
             if (condition == null) {
-                HeatCondition heatCondition = heatExpansion$addVariant(heatData.getName().toUpperCase(Locale.ROOT), heatData.getColor());
+                HeatCondition heatCondition = heatExpansion$addVariant(heatData.getName().toUpperCase(Locale.ROOT),heatData.getColor());
                 heatData.setHeatCondition(heatCondition).register();
-                CreateHeatJS.heatMap.put(heatLevel, heatCondition);
+                CreateHeatJS.heatMap.put(heatLevel,heatCondition);
             }
         });
 
+
+
         ForgeRegistries.BLOCKS.getEntries().forEach(entry -> {
             Block block = entry.getValue();
-            CreateHeatJS.heatDataMapByLevel.forEach((heatLevel, heatData) -> {
-                if (block == AllBlocks.BLAZE_BURNER.get()) {
-                    block.getStateDefinition().getPossibleStates().forEach(blockState -> {
-                        if (blockState.hasProperty(BlazeBurnerBlock.HEAT_LEVEL)) {
-                            BlazeBurnerBlock.HeatLevel level = blockState.getValue(BlazeBurnerBlock.HEAT_LEVEL);
-                            List<String> heatLevelStr = List.of("NONE", "SMOULDERING", "FADING", "KINDLED", "SEETHING");
-                            if (heatLevelStr.contains(level.getSerializedName().toUpperCase(Locale.ROOT))) {
-                                HeatData data = CreateHeatJS.heatDataMapByLevel.get(level);
-                                data.addHeatSource(block, blockState);
-                            }
-                        }
-                    });
+            block.getStateDefinition().getPossibleStates().forEach(blockState -> {
+                if (blockState.hasProperty(BlazeBurnerBlock.HEAT_LEVEL)) {
+                    BlazeBurnerBlock.HeatLevel level = blockState.getValue(BlazeBurnerBlock.HEAT_LEVEL);
+
+                    HeatData heatData = CreateHeatJS.heatDataMapByLevel.get(level);
+                    if (heatData.getHeatSourceData().containsKey(block)) {
+                        heatData.getHeatSourceData().get(block).addState(blockState);
+                    }else {
+                        heatData.getHeatSourceData().put(block, new HeatData.HeatSourceData(block).addState(blockState));
+                    }
                 }
 
-                Map<Block, HeatData.HeatSourceData> sourceDataBiMap = heatData.getHeatSourceData();
-                if (sourceDataBiMap.containsKey(block)) {
-                    sourceDataBiMap.get(block).addState(block.getStateDefinition().getPossibleStates());
+                if (CreateHeatJS.LOW_ACTIVE ){
+                    HeatSourceUtil.manualInitHeatCondition(blockState, block);
                 }
             });
         });
     }
+
+    @Unique
+    private static void createHeatJS$manualInitHeatCondition(){
+        CreateHeatJS.heatDataMap.forEach(HeatSourceUtil::manualInitHeatSource);
+        CreateHeatJS.heatDataMap.forEach(HeatSourceUtil::manualInitHeatPriority);
+    }
+    @Unique
+    private static void createHeatJS$HeatSourceMap(){
+        CreateHeatJS.heatDataMap.forEach((name,heatData) -> {
+            BlazeBurnerBlock.HeatLevel heatLevel = heatData.getHeatLevel();
+            heatData.getHeatSourceData().forEach((block,heatSourceData) -> {
+                CreateHeatJS.heatSourceMap.put(block,heatLevel);
+            });
+        });
+    }
+
+
 
 }

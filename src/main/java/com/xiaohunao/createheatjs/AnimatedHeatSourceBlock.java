@@ -21,6 +21,7 @@ import net.minecraft.client.renderer.RenderType;
 import net.minecraft.util.Mth;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.state.BlockState;
 
 public class AnimatedHeatSourceBlock extends AnimatedKinetics {
     private BlazeBurnerBlock.HeatLevel heatLevel;
@@ -45,11 +46,11 @@ public class AnimatedHeatSourceBlock extends AnimatedKinetics {
         if (block == AllBlocks.BLAZE_BURNER.get() || (CreateHeatJS.CCA_ACTIVE && block == CABlocks.LIQUID_BLAZE_BURNER.get())) {
             drawBlazeBurner(graphics);
         }
-        blockElement(block.defaultBlockState()).atLocal(0, 1.65, 0)
+        HeatData data = CreateHeatJS.heatDataMapByLevel.get(heatLevel);
+        BlockState jeiRenderBlockState = data.getHeatSourceData().get(block).getJeiRenderBlockState();
+        blockElement(jeiRenderBlockState).atLocal(0, 1.65, 0)
                 .scale(23)
                 .render(graphics);
-
-
 
         matrixStack.popPose();
     }

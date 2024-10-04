@@ -3,7 +3,7 @@
   "minVersion": "0.8",
   "package": "com.xiaohunao.createheatjs.mixin",
   "compatibilityLevel": "JAVA_17",
-  "refmap": "create_heat_js.refmap.json",
+  "refmap": "createheatjs.refmap.json",
   "mixins": [
     "BasinBlockEntityMixin",
     "BasinCategoryMixin",

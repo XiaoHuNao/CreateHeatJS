@@ -21,7 +21,7 @@ group = mod_group_id
 version = mod_version
 
 base {
-    archivesName = mod_name
+    archivesName = mod_id
 }
 
 java {
@@ -101,7 +101,7 @@ minecraft {
 
         server {
             property 'forge.enabledGameTestNamespaces', mod_id
-            args '--nogui'
+//            args '--nogui'
         }
 
         // This run config launches GameTestServer and runs all registered gametests, then exits.
@@ -194,8 +194,6 @@ dependencies {
     implementation fg.deobf("dev.latvian.mods:rhino-forge:${rhino_version}")
     implementation fg.deobf("dev.architectury:architectury-forge:${architectury_version}")
 
-    runtimeOnly fg.deobf("curse.maven:probejs-585406:5227399")
-
 
 //    compileOnly fg.deobf("mezz.jei:jei-${minecraft_version}-common-api:${jei_version}")
 //    compileOnly fg.deobf("mezz.jei:jei-${minecraft_version}-forge-api:${jei_version}")
@@ -215,10 +213,10 @@ dependencies {
     compileOnly fg.deobf("curse.maven:create-vintage-improvements-946579:5606990")
     compileOnly fg.deobf("curse.maven:create-low-heated-873945:5393309")
 
-//    runtimeOnly fg.deobf("curse.maven:createaddition-439890:5535846")
-//    runtimeOnly fg.deobf("curse.maven:create-metallurgy-1007404:5526101")
-//    runtimeOnly fg.deobf("curse.maven:create-vintage-improvements-946579:5606990")
-//    runtimeOnly fg.deobf("curse.maven:create-low-heated-873945:5393309")
+    runtimeOnly fg.deobf("curse.maven:createaddition-439890:5535846")
+    runtimeOnly fg.deobf("curse.maven:create-metallurgy-1007404:5526101")
+    runtimeOnly fg.deobf("curse.maven:create-vintage-improvements-946579:5606990")
+    runtimeOnly fg.deobf("curse.maven:create-low-heated-873945:5393309")
 
     // Example mod dependency with JEI - using fg.deobf() ensures the dependency is remapped to your development mappings
     // The JEI API is declared for compile time use, while the full JEI artifact is used at runtime

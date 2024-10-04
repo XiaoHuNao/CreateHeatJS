@@ -20,8 +20,7 @@ public class BasinRecipeMixin {
 
     @Inject(method = "apply(Lcom/simibubi/create/content/processing/basin/BasinBlockEntity;Lnet/minecraft/world/item/crafting/Recipe;Z)Z"
             , at = @At(value = "INVOKE"
-            , target = "Lcom/simibubi/create/content/processing/recipe/HeatCondition;testBlazeBurner(Lcom/simibubi/create/content/processing/burner/BlazeBurnerBlock$HeatLevel;)Z"
-            , shift = At.Shift.AFTER)
+            , target = "Lcom/simibubi/create/content/processing/recipe/HeatCondition;testBlazeBurner(Lcom/simibubi/create/content/processing/burner/BlazeBurnerBlock$HeatLevel;)Z")
             , cancellable = true
     )
     private static void createheatjs$checkForCustomHeatLevels(BasinBlockEntity basin, Recipe<?> recipe, boolean test, CallbackInfoReturnable<Boolean> cir) {
@@ -34,20 +33,22 @@ public class BasinRecipeMixin {
                 HeatCondition recipeHeatCondition = basinRecipe.getRequiredHeat();
                 BlazeBurnerBlock.HeatLevel recipeHeatHeatLevel = CreateHeatJS.heatMap.inverse().get(recipeHeatCondition);
                 HeatData recipeHeatData = CreateHeatJS.heatDataMapByLevel.get(recipeHeatHeatLevel);
-                recipeHeatData.getHeatSourceData().forEach((block, heatSourceData) -> {
-                    if (heatSourceData.getStates().contains(blockState)) {
-                        if (heatSourceData.getPredicate() != null) {
-                            if (heatSourceData.getPredicate().test(level, blockPos, blockState)) {
-                                return;
-                            }else {
-                                cir.setReturnValue(false);
-                            }
+                HeatData.HeatSourceData orDefault = recipeHeatData.getHeatSourceData().getOrDefault(blockState.getBlock(), null);
+                if (orDefault != null) {
+                    if (orDefault.getPredicate() != null) {
+                        if (orDefault.getPredicate().test(level, blockPos, blockState)) {
+                            return;
+                        } else {
+                            cir.setReturnValue(false);
                         }
-                        return;
                     }
 
-                });
+                    if (orDefault.getStates().contains(blockState)) {
+                        return;
+                    }
+                }
             }
         }
+        cir.setReturnValue(false);
     }
 }

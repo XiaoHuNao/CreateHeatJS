@@ -39,10 +39,13 @@ ServerEvents.recipes((event) => {
 
 ```js
 const $AbstractFurnaceBlock = Java.loadClass("net.minecraft.world.level.block.AbstractFurnaceBlock");
+const $CampfireBlock = Java.loadClass("net.minecraft.world.level.block.CampfireBlock");
+
 
 CreateHeatJS.registerHeatEvent((event) => {
+    //Create new grades and set special conditions with jei information tips
     event.registerHeat("BLAZE", 0xed9c33)
-        .addHeatSource("minecraft:furnace","minecraft:furnace[lit=true]",(level,pos,blockStack) => {
+        .addHeatSourceWithJei("minecraft:furnace","minecraft:furnace[lit=true,facing=south]",(level,pos,blockStack) => {
             if (blockStack.hasProperty($AbstractFurnaceBlock.LIT)) {
                 return blockStack.getValue($AbstractFurnaceBlock.LIT).booleanValue();
             }
@@ -50,12 +53,27 @@ CreateHeatJS.registerHeatEvent((event) => {
         })
         .register()
 
-    event.registerHeat("CRYOTHEUM", -1, 0x8BAAFF)
+    //Create new grades and set special conditions with jei information tips
+    event.registerHeat("CRYOTHEUM", 0x8BAAFF)
         .addHeatSource("minecraft:blue_ice", (level, pos, blockStack) => {
             return level.getBiome(pos).is(new ResourceLocation("minecraft:ice_spikes"));
         })
         .jeiTip()
         .register()
+
+    //adding the original heat source level and setting the priority
+    event.addHeatSource("KINDLED","minecraft:soul_campfire")
+        .setPriority(1)
+        .register()
+    event.addHeatSource("SEETHING","minecraft:soul_campfire",(level,pos,blockStack) => {
+            if (blockStack.hasProperty($CampfireBlock.SIGNAL_FIRE)) {
+                return blockStack.getValue($CampfireBlock.SIGNAL_FIRE).booleanValue();
+            }
+            return false
+        })
+        .setPriority(2)
+        .register()
+        
 })
 ```
 

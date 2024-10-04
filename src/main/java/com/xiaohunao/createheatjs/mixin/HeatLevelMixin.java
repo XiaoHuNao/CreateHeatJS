@@ -12,6 +12,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import java.util.ArrayList;
 import java.util.Arrays;
 
+import static com.xiaohunao.createheatjs.CreateHeatJS.heatSourceMap;
+
 @Mixin(value = BlazeBurnerBlock.HeatLevel.class, remap = false ,priority = 2000)
 public abstract class HeatLevelMixin {
     @Shadow
@@ -39,12 +41,14 @@ public abstract class HeatLevelMixin {
 
     @Unique
     private static void createHeatJS$initHeatLevel(){
+        // Add custom heat levels
         CreateHeatJS.heatDataMap.forEach((name,heatData) -> {
             BlazeBurnerBlock.HeatLevel level = heatExpansion$addVariant(name);
             heatData.setHeatLevel(level);
             CreateHeatJS.heatDataMapByLevel.put(level,heatData);
         });
 
+        // Add default heat levels
         for (BlazeBurnerBlock.HeatLevel level : $VALUES) {
             if (CreateHeatJS.heatDataMapByLevel.containsKey(level)) {
                 continue;

@@ -1,6 +1,7 @@
 package com.xiaohunao.createheatjs.mixin;
 
 import com.negodya1.vintageimprovements.compat.jei.category.PressurizingCategory;
+import com.negodya1.vintageimprovements.compat.jei.category.VacuumizingCategory;
 import com.simibubi.create.compat.jei.category.BasinCategory;
 import com.simibubi.create.compat.jei.category.MixingCategory;
 import com.simibubi.create.compat.jei.category.PackingCategory;
@@ -17,6 +18,7 @@ import mezz.jei.api.gui.ingredient.IRecipeSlotsView;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.network.chat.Component;
 import net.minecraft.world.level.block.Block;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
@@ -26,7 +28,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.util.List;
 
-@Mixin(value = {MixingCategory.class, PackingCategory.class, AlloyingCategory.class, MeltingCategory.class, PressurizingCategory.class,PressurizingCategory.class}, remap = false)
+@Mixin(value = {MixingCategory.class, PackingCategory.class, AlloyingCategory.class, MeltingCategory.class, PressurizingCategory.class,PressurizingCategory.class, VacuumizingCategory.class}, remap = false)
 public abstract class CommonCategoryMixin extends BasinCategory {
     public CommonCategoryMixin(Info<BasinRecipe> info, boolean needsHeating) {
         super(info, needsHeating);
@@ -57,7 +59,7 @@ public abstract class CommonCategoryMixin extends BasinCategory {
 
             HeatData heatData = CreateHeatJS.heatDataMapByLevel.get(orDefault);
             List<Block> heatSourceBlocks = heatData.getHeatSourceBlocks();
-            if (heatSourceBlocks.isEmpty()) {
+            if (heatSourceBlocks.size() == 0){
                 return;
             }
             int itemIndexToShow = (int) ((dayTime / 25) % (heatSourceBlocks.size()));
@@ -69,4 +71,17 @@ public abstract class CommonCategoryMixin extends BasinCategory {
         }
 
     }
+
+    @Inject(method = "draw(Lcom/simibubi/create/content/processing/basin/BasinRecipe;Lmezz/jei/api/gui/ingredient/IRecipeSlotsView;Lnet/minecraft/client/gui/GuiGraphics;DD)V"
+            ,at = @At(value = "HEAD")
+    )
+    private void createheatjs$drawJEITip(BasinRecipe recipe, IRecipeSlotsView recipeSlotsView, GuiGraphics graphics, double mouseX, double mouseY, CallbackInfo ci) {
+        HeatCondition requiredHeat = recipe.getRequiredHeat();
+        HeatData heatData = CreateHeatJS.heatDataMapByLevel.get(CreateHeatJS.heatMap.inverse().get(requiredHeat));
+        if (heatData.canShowJeiTip()) {
+            graphics.drawString(Minecraft.getInstance().font, Component.translatable("gui.create.jei.category.basin.heat." + requiredHeat.serialize() + ".title"),
+                    9, 0, heatData.getColor(), false);
+        }
+    }
+
 }
