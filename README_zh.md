@@ -2,18 +2,18 @@
 
 # Create Heat JS
 
-[中文](README_zh.md) | **English**
+**中文** | [English](README.md)
 
 ![icon.png](./src/main/resources/icon.png)
 
 [![curseforge-badge]][curseforge-url] [![modrinth-badge]][modrinth-url] [![github-badge]][github-url]
 </div>
 
-Allows using KubeJS to customize Create's Heat Source Blocks and Heat Levels.
+允许使用KubeJS自定义Create的热源与热源等级
 
-Please use [KubeJS Create Mod](https://modrinth.com/mod/kubejs-create/) when adding recipes, and use the `.heatLevel()` method to set the heat level.
+添加配方时请使用模组[KubeJS Create Mod](https://modrinth.com/mod/kubejs-create/)  `.heatLevel()` 方法设置配方所需热源等级
 
-## Example
+## 示例
 
 ![Recipe Example](./example/recipe_example_1.gif)
 ![Recipe Example](./example/recipe_example_2.png)
@@ -40,21 +40,18 @@ ServerEvents.recipes((event) => {
 
 ```js
 CreateHeatJS.registerHeatEvent(event => {
-    // 1. Basic Example: Register custom heat source BLAZE
-    // Use addHeatSource(String blockId) - The most common way
+    // 使用 addHeatSource(String blockId) - 最常用的方式
     event.registerHeat("BLAZE", builder => builder
         .color(0xFF4500)
         .addHeatSource("minecraft:magma_block") //Block
         .satisfies("HEATED")
     )
-
-    // 2. Advanced Example: Register CRYOTHEUM
-    // Demonstrates the use of all overloaded methods
+    
     event.registerHeat("CRYOTHEUM", data => data
         .color(0x00BFFF)
         .addHeatSource("#minecraft:ice") //BlockTags
 
-        // Example: If in the Nether (dimension check), and the block is soul_lantern
+        // 示例：如果在下界 (dimension check)，且方块是 packed_ice
         .addHeatSourceIf((level, pos) => {
             if (level.dimension === "minecraft:the_nether") {
                 return level.getBlockState(pos).block.id === "minecraft:soul_lantern"
@@ -62,53 +59,51 @@ CreateHeatJS.registerHeatEvent(event => {
             return false
         })
 
-        // Relationship: Satisfies HEATED condition
+        // 关系网：满足 HEATED 条件
         .satisfies("HEATED")
 
-        // Conditional Relationship: Satisfies only in specific recipes
-        // Example: If recipe ID is "create:mixing/lava_from_cobble", it is considered to satisfy "SUPERHEATED"
+        // 条件关系网：仅在特定配方中满足
+        // 示例：如果配方 ID  "create:mixing/lava_from_cobble"，则视为满足 "SUPERHEATED"
         .satisfiesIf("SUPERHEATED", ctx => ctx.getRecipeId() == "create:mixing/lava_from_cobble"))
 
     /**
-     * Add heat source (supports string format)
-     * Supported formats:
-     * - blocktag:namespace:path (Block Tag)
-     * - fluidtag:namespace:path (Fluid Tag)
-     * - block:namespace:path (Block ID)
-     * - fluid:namespace:path (Fluid ID)
-     * - namespace:path[prop=value] (Block State)
-     * - #namespace:path (Try to match Block or Fluid Tag)
+     * 添加热源（支持字符串格式）
+     * 支持的格式：
+     * - blocktag:namespace:path (方块标签)
+     * - fluidtag:namespace:path (流体标签)
+     * - block:namespace:path (方块 ID)
+     * - fluid:namespace:path (流体 ID)
+     * - namespace:path[prop=value] (方块状态)
+     * - #namespace:path (尝试匹配方块或流体标签)
      *
-     * @param heatSource Heat Source
+     * @param heatSource 热源 
      * @return Builder
      */
     //addHeatSource(String heatSource)
     
     /**
-     * @param heatSourceDisplayItem Item displayed in JEI heat source slot
+     * @param heatSourceDisplayItem jei热源槽显示的物品
      * @return Builder
      */
     //heatSourceSlotItem(ItemStack heatSourceDisplayItem)
         
     /**
-     * @param catalystDisplayItem Item displayed in JEI catalyst slot
+     * @param catalystDisplayItem jei催化物槽显示的物品
      * @return Builder
      */
     //catalyst(ItemStack catalystDisplayItem)
     
     
-    // You can use satisfies or satisfiesIf methods to perfect the heat level network, 
-    // extending the original Create mod's linear relationship levels, allowing vertical, horizontal, and cross relationships.
+    //可以通过satisfies或satisfiesIf方法完善热量等级网线网,拓展原Create模组线性关系等级,允许竖向,横向,交叉关系
     
-    // Vertical Relationship
-    event.bindSatisfies("TEST1", "TEST2") // The effect here is similar to the "SUPERHEATED", "HEATED" linear relationship of the Create mod.
+    //竖向关系
+    event.bindSatisfies("TEST1", "TEST2")//这里的效果即可以类似Create模组的"SUPERHEATED", "HEATED" 线性关系
     
-    // Horizontal Relationship
-    // Register a brand new level without using satisfies or satisfiesIf methods to bind the relationship network.
+    //横向关系
+    即注册一个全新的等级并不使用satisfies或satisfiesIf方法绑定关系网
     
-    // Cross Relationship
-    // The CRYOTHEUM level registered above belongs to a horizontal independent system, 
-    // but uses satisfies and satisfiesIf to cross back into the Create mod's SUPERHEATED, HEATED linear relationships.
+    //交叉关系
+    如上注册的CRYOTHEUM等级,属于横向独立体系,但使用satisfies和satisfiesIf交叉回Create模组的 `SUPERHEATED`, `HEATED`,线性关系
 })
 ```
 
