@@ -44,7 +44,8 @@ const $CampfireBlock = Java.loadClass("net.minecraft.world.level.block.CampfireB
 
 CreateHeatJS.registerHeatEvent((event) => {
     //Create new grades and set special conditions with jei information tips
-    event.registerHeat("BLAZE", 0xed9c33)
+    event.registerHeat("BLAZE", builder => builder)
+        .color(0xed9c33)
         .addHeatSourceWithJei("minecraft:furnace","minecraft:furnace[lit=true,facing=south]",(level,pos,blockStack) => {
             if (blockStack.hasProperty($AbstractFurnaceBlock.LIT)) {
                 return blockStack.getValue($AbstractFurnaceBlock.LIT).booleanValue();

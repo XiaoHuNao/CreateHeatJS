@@ -1,7 +1,6 @@
 {
   "pack": {
-    "description": "createheatjs resources",
-    "pack_format": 15,
-    "forge:server_data_pack_format": 12
+    "description": "create_heat_js resources",
+    "pack_format": 15
   }
 }

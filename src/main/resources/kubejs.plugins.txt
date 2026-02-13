@@ -1,1 +1,1 @@
-com.xiaohunao.createheatjs.KubeJSCreatePlugin
+com.xiaohunao.create_heat_js.HeatJSKubeJSPlugin
