@@ -153,8 +153,7 @@ public class CategoryHelper {
         ItemStack configuredCatalyst = heatData.getCatalystDisplayItem();
         if (configuredCatalyst != null && !configuredCatalyst.isEmpty()) {
             catalystItem = configuredCatalyst;
-        } else if (!requiredHeat.testBlazeBurner(BlazeBurnerBlock.HeatLevel.KINDLED)
-                && heatLevel == BlazeBurnerBlock.HeatLevel.SEETHING) {
+        } else if (heatLevel == BlazeBurnerBlock.HeatLevel.SEETHING) {
             catalystItem = AllItems.BLAZE_CAKE.asStack();
         }
 

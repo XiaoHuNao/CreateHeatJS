@@ -22,10 +22,7 @@ public abstract class FoundryBasinCategoryMixin {
             cancellable = true
     )
     private void chj$setRecipe(IRecipeLayoutBuilder builder, FoundryBasinRecipe recipe, IFocusGroup focuses, CallbackInfo ci) {
-        if (!CategoryHelper.setCustomHeatSourceRecipe(builder, recipe)) {
-            return;
-        }
-
+        CategoryHelper.setCustomHeatSourceRecipe(builder, recipe);
         ci.cancel();
     }
 }

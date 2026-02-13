@@ -27,9 +27,7 @@ public abstract class BasinRecipeCategoryMixin {
             cancellable = true
     )
     private void chj$setRecipe(IRecipeLayoutBuilder builder, BasinRecipe recipe, IFocusGroup focuses, CallbackInfo ci) {
-        if (!CategoryHelper.setCustomHeatSourceRecipe(builder, recipe)) {
-            return;
-        }
+        CategoryHelper.setCustomHeatSourceRecipe(builder, recipe);
 
         ci.cancel();
     }
