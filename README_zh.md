@@ -36,7 +36,7 @@ ServerEvents.recipes((event) => {
 });
 ```
 
-### Startup Scripts
+### Server Scripts
 
 ```js
 CreateHeatJS.registerHeatEvent(event => {
