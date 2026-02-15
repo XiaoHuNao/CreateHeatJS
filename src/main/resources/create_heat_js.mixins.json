@@ -2,18 +2,14 @@
   "required": true,
   "minVersion": "0.8",
   "package": "com.xiaohunao.create_heat_js.common.mixin.classes",
-  "compatibilityLevel": "JAVA_8",
+  "compatibilityLevel": "JAVA_21",
   "refmap": "create_heat_js.refmap.json",
   "mixins": [
     "BasinRecipeMixin",
     "HeatConditionMixin",
     "HeatLevelMixin",
-    "ProcessingRecipeJSMixin",
-    "category.FoundryBasinCategoryMixin",
     "category.MixingCategoryMixin",
-    "category.PackingCategoryMixin",
-    "category.createmetallurgy.AlloyingCategoryMixin",
-    "category.createmetallurgy.MeltingCategoryMixin"
+    "category.PackingCategoryMixin"
   ],
   "client": [
     "category.BasinRecipeCategoryMixin"

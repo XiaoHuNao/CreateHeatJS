@@ -18,12 +18,11 @@ import com.simibubi.create.content.processing.burner.BlazeBurnerBlock;
 import com.simibubi.create.content.processing.recipe.HeatCondition;
 import com.xiaohunao.create_heat_js.CreateHeatJS;
 
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.Fluid;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
-import net.minecraftforge.registries.ForgeRegistries;
+import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
 
 
 public class HeatManager {
@@ -58,13 +57,10 @@ public class HeatManager {
         return relations.matches(providerConditionName, requirementConditionName, context);
     }
 
-
-    @SubscribeEvent
     public void onFMLCommonSetup(FMLCommonSetupEvent event) {
         LOGGER.info("CreateHeatJS: HeatManager onFMLCommonSetup");
 
-        ForgeRegistries.BLOCKS.getEntries().forEach(entry -> {
-            Block block = entry.getValue();
+        for (Block block : BuiltInRegistries.BLOCK) {
             block.getStateDefinition().getPossibleStates().forEach(blockState -> {
                 if (blockState.hasProperty(BlazeBurnerBlock.HEAT_LEVEL)) {
                     BlazeBurnerBlock.HeatLevel level = blockState.getValue(BlazeBurnerBlock.HEAT_LEVEL);
@@ -75,7 +71,7 @@ public class HeatManager {
                     }
                 }
             });
-        });
+        }
 
         CreateHeatJS.heatProvider.addDefaultHeatSources();
     }
@@ -173,7 +169,7 @@ public class HeatManager {
                 }
             } else if (heatSource instanceof HeatSource.BlockTagHeatSource blockTagHeatSource) {
                 if (blockTagHeatSource.tag != null) {
-                    ForgeRegistries.BLOCKS.getValues().forEach(block -> {
+                    BuiltInRegistries.BLOCK.forEach(block -> {
                         if (block.builtInRegistryHolder().is(blockTagHeatSource.tag)) {
                             newBlocks.add(block);
                         }
@@ -189,7 +185,7 @@ public class HeatManager {
                 }
             } else if (heatSource instanceof HeatSource.FluidTagHeatSource fluidTagHeatSource) {
                 if (fluidTagHeatSource.tag != null) {
-                    ForgeRegistries.FLUIDS.getValues().forEach(fluid -> {
+                    BuiltInRegistries.FLUID.forEach(fluid -> {
                         if (fluid.builtInRegistryHolder().is(fluidTagHeatSource.tag)) {
                             BlockState legacy = fluid.defaultFluidState().createLegacyBlock();
                             if (legacy != null) {

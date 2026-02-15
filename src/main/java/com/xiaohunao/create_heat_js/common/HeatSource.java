@@ -5,12 +5,12 @@ import java.util.function.BiPredicate;
 import java.util.function.Consumer;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.Fluid;
-import net.minecraftforge.registries.ForgeRegistries;
 
 
 public class HeatSource {
@@ -98,7 +98,7 @@ public class HeatSource {
             if (tag == null) {
                 return;
             }
-            for (Block block : ForgeRegistries.BLOCKS.getValues()) {
+            for (Block block : BuiltInRegistries.BLOCK) {
                 if (block != null && block.builtInRegistryHolder().is(tag)) {
                     consumer.accept(block);
                 }
@@ -153,7 +153,7 @@ public class HeatSource {
             if (tag == null) {
                 return;
             }
-            for (Fluid fluid : ForgeRegistries.FLUIDS.getValues()) {
+            for (Fluid fluid : BuiltInRegistries.FLUID) {
                 if (fluid == null) {
                     continue;
                 }

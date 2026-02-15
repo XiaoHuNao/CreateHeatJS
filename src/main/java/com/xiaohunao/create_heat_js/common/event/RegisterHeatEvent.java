@@ -6,10 +6,10 @@ import java.util.function.Function;
 import com.xiaohunao.create_heat_js.common.HeatData;
 import com.xiaohunao.create_heat_js.common.HeatManager;
 
-import dev.latvian.mods.kubejs.event.EventJS;
+import dev.latvian.mods.kubejs.event.KubeEvent;
 
 
-public class RegisterHeatEvent extends EventJS {
+public class RegisterHeatEvent implements KubeEvent {
 
 
     public void registerHeat(String heatName, Consumer<HeatData.Builder> builder) {

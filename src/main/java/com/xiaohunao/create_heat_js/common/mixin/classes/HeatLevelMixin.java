@@ -1,5 +1,7 @@
 package com.xiaohunao.create_heat_js.common.mixin.classes;
 
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.DataResult;
 import com.simibubi.create.content.processing.burner.BlazeBurnerBlock;
 import com.xiaohunao.create_heat_js.common.mixin.extensions.HeatLevelExpandAccessor;
 import org.spongepowered.asm.mixin.Final;
@@ -21,6 +23,11 @@ public class HeatLevelMixin implements HeatLevelExpandAccessor {
     @Mutable
     private static BlazeBurnerBlock.HeatLevel[] $VALUES;
 
+    @Shadow
+    @Final
+    @Mutable
+    public static Codec<BlazeBurnerBlock.HeatLevel> CODEC;
+
     @Invoker("<init>")
     public static BlazeBurnerBlock.HeatLevel createheatjs$init(String internalName, int internalId) {
         throw new AssertionError();
@@ -28,7 +35,32 @@ public class HeatLevelMixin implements HeatLevelExpandAccessor {
 
     @Inject(method = "<clinit>", at = @At("TAIL"))
     private static void createheatjs$clinit(CallbackInfo ci) {
-        // System.out.println("CreateHeatJS: Initializing Heat Levels");
+        CODEC = Codec.STRING.flatXmap(
+            name -> {
+                if (name == null) {
+                    return DataResult.error(() -> "HeatLevel name cannot be null");
+                }
+                BlazeBurnerBlock.HeatLevel[] allValues = $VALUES;
+                for (BlazeBurnerBlock.HeatLevel value : allValues) {
+                    if (value.name().equals(name)) {
+                        return DataResult.success(value);
+                    }
+                }
+                String upperName = name.toUpperCase();
+                for (BlazeBurnerBlock.HeatLevel value : allValues) {
+                    if (value.name().equals(upperName)) {
+                        return DataResult.success(value);
+                    }
+                }
+                return DataResult.error(() -> "Unknown HeatLevel: " + name);
+            },
+            value -> {
+                if (value == null) {
+                    return DataResult.error(() -> "HeatLevel cannot be null");
+                }
+                return DataResult.success(value.name());
+            }
+        );
     }
 
     @Override

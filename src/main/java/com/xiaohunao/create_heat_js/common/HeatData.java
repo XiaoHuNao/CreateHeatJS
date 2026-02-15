@@ -15,6 +15,7 @@ import com.xiaohunao.create_heat_js.common.mixin.extensions.HeatConditionExpandA
 import com.xiaohunao.create_heat_js.common.mixin.extensions.HeatLevelExpandAccessor;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.TagKey;
@@ -24,7 +25,6 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.Property;
 import net.minecraft.world.level.material.Fluid;
-import net.minecraftforge.registries.ForgeRegistries;
 
 
 public class HeatData {
@@ -264,7 +264,7 @@ public class HeatData {
                 String idStr = raw.substring("block:".length()).trim();
                 ResourceLocation id = parseId(idStr);
                 if (id != null) {
-                    Block block = ForgeRegistries.BLOCKS.getValue(id);
+                    Block block = BuiltInRegistries.BLOCK.get(id);
                     if (block != null) {
                         addBlockHeatSource(block);
                     }
@@ -276,7 +276,7 @@ public class HeatData {
                 String idStr = raw.substring("fluid:".length()).trim();
                 ResourceLocation id = parseId(idStr);
                 if (id != null) {
-                    Fluid fluid = ForgeRegistries.FLUIDS.getValue(id);
+                    Fluid fluid = BuiltInRegistries.FLUID.get(id);
                     if (fluid != null) {
                         addFluidHeatSource(fluid);
                     }
@@ -294,9 +294,9 @@ public class HeatData {
                 TagKey<Block> blockTag = createBlockTag(raw);
                 TagKey<Fluid> fluidTag = createFluidTag(raw);
 
-                boolean anyBlock = blockTag != null && ForgeRegistries.BLOCKS.getValues().stream()
+                boolean anyBlock = blockTag != null && BuiltInRegistries.BLOCK.stream()
                     .anyMatch(block -> block.builtInRegistryHolder().is(blockTag));
-                boolean anyFluid = fluidTag != null && ForgeRegistries.FLUIDS.getValues().stream()
+                boolean anyFluid = fluidTag != null && BuiltInRegistries.FLUID.stream()
                     .anyMatch(fluid -> fluid.builtInRegistryHolder().is(fluidTag));
 
                 if (anyFluid && !anyBlock) {
@@ -314,13 +314,13 @@ public class HeatData {
                 return this;
             }
 
-            Block block = ForgeRegistries.BLOCKS.getValue(id);
+            Block block = BuiltInRegistries.BLOCK.get(id);
             if (block != null) {
                 addBlockHeatSource(block);
                 return this;
             }
 
-            Fluid fluid = ForgeRegistries.FLUIDS.getValue(id);
+            Fluid fluid = BuiltInRegistries.FLUID.get(id);
             if (fluid != null) {
                 addFluidHeatSource(fluid);
             }
@@ -438,7 +438,7 @@ public class HeatData {
                 return null;
             }
 
-            Block block = ForgeRegistries.BLOCKS.getValue(id);
+            Block block = BuiltInRegistries.BLOCK.get(id);
             if (block == null) {
                 return null;
             }

@@ -18,7 +18,9 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.Fluid;
-import net.minecraftforge.registries.ForgeRegistries;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.neoforged.neoforge.fluids.FluidStack;
+import net.neoforged.neoforge.fluids.FluidUtil;
 
 
 public class HeatSourceRendererHelper {
@@ -134,11 +136,8 @@ public class HeatSourceRendererHelper {
         if (item instanceof BlockItem blockItem) {
             return blockItem.getBlock().defaultBlockState();
         }
-        if (item instanceof BucketItem bucketItem) {
-            Fluid fluid = bucketItem.getFluid();
-            if (fluid == null) {
-                return null;
-            }
+        Fluid fluid = FluidUtil.getFluidContained(stack).map(FluidStack::getFluid).orElse(null);
+        if (fluid != null) {
             return fluid.defaultFluidState().createLegacyBlock();
         }
         return null;
@@ -173,11 +172,11 @@ public class HeatSourceRendererHelper {
         }
 
         LinkedHashMap<Block, ItemStack> map = new LinkedHashMap<>();
-        for (Item item : ForgeRegistries.ITEMS.getValues()) {
+        for (Item item : BuiltInRegistries.ITEM) {
             if (!(item instanceof BucketItem bucketItem)) {
                 continue;
             }
-            Fluid fluid = bucketItem.getFluid();
+            Fluid fluid = FluidUtil.getFluidContained(new ItemStack(bucketItem)).map(FluidStack::getFluid).orElse(null);
             if (fluid == null) {
                 continue;
             }

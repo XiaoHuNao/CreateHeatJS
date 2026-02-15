@@ -1,5 +1,7 @@
 package com.xiaohunao.create_heat_js.common.mixin.classes;
 
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.DataResult;
 import com.simibubi.create.content.processing.burner.BlazeBurnerBlock;
 import com.simibubi.create.content.processing.recipe.HeatCondition;
 import com.xiaohunao.create_heat_js.common.HeatManager;
@@ -23,6 +25,11 @@ public class HeatConditionMixin implements HeatConditionExpandAccessor {
     @Mutable
     private static HeatCondition[] $VALUES;
 
+    @Shadow
+    @Final
+    @Mutable
+    private static Codec<HeatCondition> CODEC;
+
     @Invoker("<init>")
     public static HeatCondition createheatjs$init(String internalName, int color, int internalId) {
         throw new AssertionError();
@@ -30,7 +37,32 @@ public class HeatConditionMixin implements HeatConditionExpandAccessor {
 
     @Inject(method = "<clinit>", at = @At("TAIL"))
     private static void createheatjs$clinit(CallbackInfo ci) {
-        // System.out.println("CreateHeatJS: Initializing Heat Conditions");
+        CODEC = Codec.STRING.flatXmap(
+            name -> {
+                if (name == null) {
+                    return DataResult.error(() -> "HeatCondition name cannot be null");
+                }
+                HeatCondition[] allValues = $VALUES;
+                for (HeatCondition value : allValues) {
+                    if (value.name().equals(name)) {
+                        return DataResult.success(value);
+                    }
+                }
+                String upperName = name.toUpperCase();
+                for (HeatCondition value : allValues) {
+                    if (value.name().equals(upperName)) {
+                        return DataResult.success(value);
+                    }
+                }
+                return DataResult.error(() -> "Unknown HeatCondition: " + name);
+            },
+            value -> {
+                if (value == null) {
+                    return DataResult.error(() -> "HeatCondition cannot be null");
+                }
+                return DataResult.success(value.name());
+            }
+        );
     }
 
     @Unique

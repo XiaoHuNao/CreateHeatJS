@@ -2,12 +2,13 @@ package com.xiaohunao.create_heat_js;
 
 import com.xiaohunao.create_heat_js.common.HeatManager;
 import com.xiaohunao.create_heat_js.common.HeatProvider;
+import com.xiaohunao.create_heat_js.common.event.CommonEvents;
 import net.minecraft.core.Registry;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraftforge.eventbus.api.IEventBus;
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
+import net.neoforged.bus.api.IEventBus;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.neoforge.common.NeoForge;
 
 @Mod(CreateHeatJS.MOD_ID)
 public class CreateHeatJS {
@@ -15,10 +16,9 @@ public class CreateHeatJS {
 
     public static final HeatProvider  heatProvider = new HeatProvider();
 
-    public CreateHeatJS() {
-        IEventBus modEventBus = FMLJavaModLoadingContext.get().getModEventBus();
-
+    public CreateHeatJS(IEventBus modEventBus) {
         modEventBus.addListener(HeatManager.getInstance()::onFMLCommonSetup);
+        NeoForge.EVENT_BUS.addListener(CommonEvents::onAddReloadListener);
     }
 
     public static ResourceLocation asResource(String path) {
