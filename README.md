@@ -32,11 +32,11 @@ ClientEvents.lang("en_us", (event) => {
 ```js
 ServerEvents.recipes((event) => {
   event.recipes.create.mixing("minecraft:diamond", "minecraft:coal_block").heatLevel("BLAZE");
-  event.recipes.create.compacting("thermal:blizz_powder", "minecraft:blue_ice").heatLevel("CRYOTHEUM");
+  event.recipes.create.compacting("minecraft:water", "minecraft:blue_ice").heatLevel("CRYOTHEUM");
 });
 ```
 
-### Startup Scripts
+### Server Scripts
 
 ```js
 CreateHeatJS.registerHeatEvent(event => {

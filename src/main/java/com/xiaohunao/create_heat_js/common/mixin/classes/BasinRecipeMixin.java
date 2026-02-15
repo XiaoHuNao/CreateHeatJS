@@ -36,7 +36,7 @@ public class BasinRecipeMixin {
 
         BlockPos pos = basin.getBlockPos().below(1);
         BlockState state = world.getBlockState(pos);
-        HeatRecipeContext context = HeatRecipeContext.of(recipe);
+        HeatRecipeContext context = HeatRecipeContext.of(world, recipe);
 
         boolean hasAnyProvider = false;
         for (HeatData provider : heatManager.getCandidateHeatDatas(state)) {
