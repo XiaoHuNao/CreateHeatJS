@@ -172,18 +172,31 @@ public class HeatSource {
 
     public static class FunctionalHeatSource extends HeatSource{
         public final BiPredicate<Level, BlockPos> function;
+        public final HeatSource displayHeatSource;
 
-        private FunctionalHeatSource(BiPredicate<Level, BlockPos> function) {
+        private FunctionalHeatSource(BiPredicate<Level, BlockPos> function, HeatSource displayHeatSource) {
             this.function = function;
+            this.displayHeatSource = displayHeatSource;
         }
 
         public static FunctionalHeatSource of(BiPredicate<Level, BlockPos> function) {
-            return new FunctionalHeatSource(function);
+            return new FunctionalHeatSource(function, null);
+        }
+
+        public static FunctionalHeatSource of(BiPredicate<Level, BlockPos> function, HeatSource displayHeatSource) {
+            return new FunctionalHeatSource(function, displayHeatSource);
         }
 
         @Override
         public boolean matches(Level level, BlockPos pos, BlockState state) {
             return function != null && level != null && pos != null && function.test(level, pos);
+        }
+
+        @Override
+        public void forEachDisplayBlock(Consumer<Block> consumer) {
+            if (displayHeatSource != null && consumer != null) {
+                displayHeatSource.forEachDisplayBlock(consumer);
+            }
         }
     }
 }

@@ -1,6 +1,7 @@
 package com.xiaohunao.create_heat_js;
 
 import java.util.List;
+import java.util.Locale;
 
 import com.xiaohunao.create_heat_js.common.HeatData;
 import com.xiaohunao.create_heat_js.common.HeatManager;
@@ -43,14 +44,14 @@ public class HeatJSKubeJSPlugin implements KubeJSPlugin {
 
         @Override
         public void execute(RecipeScriptContext cx, List<Object> args) {
-            String heatLevelName = args.isEmpty() || args.getFirst() == null ? null : String.valueOf(args.getFirst());
+            String heatLevelName = args.isEmpty() || args.getFirst() == null ? null : String.valueOf(args.getFirst()).toUpperCase(Locale.ROOT);
             HeatData heatData = HeatManager.getInstance().getHeatData(heatLevelName);
 
             if (heatData == null) {
                 throw new IllegalArgumentException("Unknown heat level: " + heatLevelName);
             }
 
-            String conditionName = heatData.getCondition() == null ? null : heatData.getCondition().name();
+            String conditionName = heatData.getCondition() == null ? null : heatData.getCondition().name().toLowerCase(Locale.ROOT);
             cx.recipe().set(cx.cx(), "heat_requirement", conditionName == null ? "none" : conditionName);
         }
     }

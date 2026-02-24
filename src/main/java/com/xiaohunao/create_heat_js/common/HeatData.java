@@ -147,6 +147,37 @@ public class HeatData {
         return this;
     }
 
+    public HeatData addHeatSourceIf(BiPredicate<Level, BlockPos> function, Block block) {
+        this.heatSources.add(HeatSource.FunctionalHeatSource.of(function, HeatSource.BlockHeatSource.of(block)));
+        return this;
+    }
+
+    public HeatData addHeatSourceIf(BiPredicate<Level, BlockPos> function, Fluid fluid) {
+        this.heatSources.add(HeatSource.FunctionalHeatSource.of(function, HeatSource.FluidHeatSource.of(fluid)));
+        return this;
+    }
+
+    public HeatData addHeatSourceIf(BiPredicate<Level, BlockPos> function, TagKey<?> tag) {
+        if (tag == null) {
+            this.heatSources.add(HeatSource.FunctionalHeatSource.of(function));
+            return this;
+        }
+        if (Registries.BLOCK.equals(tag.registry())) {
+            @SuppressWarnings("unchecked")
+            TagKey<Block> blockTag = (TagKey<Block>) tag;
+            this.heatSources.add(HeatSource.FunctionalHeatSource.of(function, HeatSource.BlockTagHeatSource.of(blockTag)));
+            return this;
+        }
+        if (Registries.FLUID.equals(tag.registry())) {
+            @SuppressWarnings("unchecked")
+            TagKey<Fluid> fluidTag = (TagKey<Fluid>) tag;
+            this.heatSources.add(HeatSource.FunctionalHeatSource.of(function, HeatSource.FluidTagHeatSource.of(fluidTag)));
+            return this;
+        }
+        this.heatSources.add(HeatSource.FunctionalHeatSource.of(function));
+        return this;
+    }
+
     public HeatData satisfies(String... requirements) {
         if (requirements == null) {
             return this;
@@ -229,111 +260,22 @@ public class HeatData {
          * @return Builder
          */
         public Builder addHeatSource(String heatSource) {
-            if (heatSource == null || heatSource.isBlank()) {
-                return this;
-            }
-
-            String raw = heatSource.trim();
-            String lower = raw.toLowerCase(Locale.ROOT);
-
-            if (lower.startsWith("blocktag:") || lower.startsWith("block_tag:")) {
-                String tagId = raw.substring(raw.indexOf(':') + 1).trim();
-                if (!tagId.startsWith("#")) {
-                    tagId = "#" + tagId;
-                }
-                TagKey<Block> tag = createBlockTag(tagId);
-                if (tag != null) {
-                    addBlockTagHeatSource(tag);
-                }
-                return this;
-            }
-
-            if (lower.startsWith("fluidtag:") || lower.startsWith("fluid_tag:")) {
-                String tagId = raw.substring(raw.indexOf(':') + 1).trim();
-                if (!tagId.startsWith("#")) {
-                    tagId = "#" + tagId;
-                }
-                TagKey<Fluid> tag = createFluidTag(tagId);
-                if (tag != null) {
-                    addFluidTagHeatSource(tag);
-                }
-                return this;
-            }
-
-            if (lower.startsWith("block:")) {
-                String idStr = raw.substring("block:".length()).trim();
-                ResourceLocation id = parseId(idStr);
-                if (id != null) {
-                    Block block = BuiltInRegistries.BLOCK.get(id);
-                    if (block != null) {
-                        addBlockHeatSource(block);
-                    }
-                }
-                return this;
-            }
-
-            if (lower.startsWith("fluid:")) {
-                String idStr = raw.substring("fluid:".length()).trim();
-                ResourceLocation id = parseId(idStr);
-                if (id != null) {
-                    Fluid fluid = BuiltInRegistries.FLUID.get(id);
-                    if (fluid != null) {
-                        addFluidHeatSource(fluid);
-                    }
-                }
-                return this;
-            }
-
-            BlockState parsedState = parseBlockState(raw);
-            if (parsedState != null) {
-                addBlockStateHeatSource(parsedState);
-                return this;
-            }
-
-            if (raw.startsWith("#")) {
-                TagKey<Block> blockTag = createBlockTag(raw);
-                TagKey<Fluid> fluidTag = createFluidTag(raw);
-
-                boolean anyBlock = blockTag != null && BuiltInRegistries.BLOCK.stream()
-                    .anyMatch(block -> block.builtInRegistryHolder().is(blockTag));
-                boolean anyFluid = fluidTag != null && BuiltInRegistries.FLUID.stream()
-                    .anyMatch(fluid -> fluid.builtInRegistryHolder().is(fluidTag));
-
-                if (anyFluid && !anyBlock) {
-                    addFluidTagHeatSource(fluidTag);
-                } else if (blockTag != null) {
-                    addBlockTagHeatSource(blockTag);
-                } else if (fluidTag != null) {
-                    addFluidTagHeatSource(fluidTag);
-                }
-                return this;
-            }
-
-            ResourceLocation id = parseId(raw);
-            if (id == null) {
-                return this;
-            }
-
-            Block block = BuiltInRegistries.BLOCK.get(id);
-            if (block != null) {
-                addBlockHeatSource(block);
-                return this;
-            }
-
-            Fluid fluid = BuiltInRegistries.FLUID.get(id);
-            if (fluid != null) {
-                addFluidHeatSource(fluid);
+            HeatSource parsed = createHeatSourceFromString(heatSource);
+            if (parsed != null) {
+                this.heatSources.add(parsed);
             }
             return this;
         }
 
-        /**
-         * 根据函数条件添加热源
-         * @param function 判断函数
-         * @return Builder
-         */
-        public Builder addHeatSourceIf(BiPredicate<Level, BlockPos> function) {
+
+        public Builder addFunctionalHeatSource(BiPredicate<Level, BlockPos> function) {
             this.heatSources.add(HeatSource.FunctionalHeatSource.of(function));
+            return this;
+        }
+
+        public Builder addHeatSourceIf(BiPredicate<Level, BlockPos> function, String heatSource) {
+            HeatSource display = createHeatSourceFromString(heatSource);
+            this.heatSources.add(HeatSource.FunctionalHeatSource.of(function, display));
             return this;
         }
 
@@ -363,6 +305,102 @@ public class HeatData {
         public Builder addFluidTagHeatSource(TagKey<Fluid> fluidTag) {
             this.heatSources.add(HeatSource.FluidTagHeatSource.of(fluidTag));
             return this;
+        }
+
+        private HeatSource createHeatSourceFromString(String heatSource) {
+            if (heatSource == null || heatSource.isBlank()) {
+                return null;
+            }
+            String raw = heatSource.trim();
+            String lower = raw.toLowerCase(Locale.ROOT);
+
+            if (lower.startsWith("blocktag:") || lower.startsWith("block_tag:")) {
+                String tagId = raw.substring(raw.indexOf(':') + 1).trim();
+                if (!tagId.startsWith("#")) {
+                    tagId = "#" + tagId;
+                }
+                TagKey<Block> tag = createBlockTag(tagId);
+                if (tag != null) {
+                    return HeatSource.BlockTagHeatSource.of(tag);
+                }
+                return null;
+            }
+
+            if (lower.startsWith("fluidtag:") || lower.startsWith("fluid_tag:")) {
+                String tagId = raw.substring(raw.indexOf(':') + 1).trim();
+                if (!tagId.startsWith("#")) {
+                    tagId = "#" + tagId;
+                }
+                TagKey<Fluid> tag = createFluidTag(tagId);
+                if (tag != null) {
+                    return HeatSource.FluidTagHeatSource.of(tag);
+                }
+                return null;
+            }
+
+            if (lower.startsWith("block:")) {
+                String idStr = raw.substring("block:".length()).trim();
+                ResourceLocation id = parseId(idStr);
+                if (id != null) {
+                    Block block = BuiltInRegistries.BLOCK.get(id);
+                    if (block != null) {
+                        return HeatSource.BlockHeatSource.of(block);
+                    }
+                }
+                return null;
+            }
+
+            if (lower.startsWith("fluid:")) {
+                String idStr = raw.substring("fluid:".length()).trim();
+                ResourceLocation id = parseId(idStr);
+                if (id != null) {
+                    Fluid fluid = BuiltInRegistries.FLUID.get(id);
+                    if (fluid != null) {
+                        return HeatSource.FluidHeatSource.of(fluid);
+                    }
+                }
+                return null;
+            }
+
+            BlockState parsedState = parseBlockState(raw);
+            if (parsedState != null) {
+                return HeatSource.BlockStateHeatSource.of(parsedState);
+            }
+
+            if (raw.startsWith("#")) {
+                TagKey<Block> blockTag = createBlockTag(raw);
+                TagKey<Fluid> fluidTag = createFluidTag(raw);
+
+                boolean anyBlock = blockTag != null && BuiltInRegistries.BLOCK.stream()
+                    .anyMatch(block -> block.builtInRegistryHolder().is(blockTag));
+                boolean anyFluid = fluidTag != null && BuiltInRegistries.FLUID.stream()
+                    .anyMatch(fluid -> fluid.builtInRegistryHolder().is(fluidTag));
+
+                if (anyFluid && !anyBlock) {
+                    return HeatSource.FluidTagHeatSource.of(fluidTag);
+                } else if (blockTag != null) {
+                    return HeatSource.BlockTagHeatSource.of(blockTag);
+                } else if (fluidTag != null) {
+                    return HeatSource.FluidTagHeatSource.of(fluidTag);
+                }
+                return null;
+            }
+
+            ResourceLocation id = parseId(raw);
+            if (id == null) {
+                return null;
+            }
+
+            Block block = BuiltInRegistries.BLOCK.get(id);
+            if (block != null) {
+                return HeatSource.BlockHeatSource.of(block);
+            }
+
+            Fluid fluid = BuiltInRegistries.FLUID.get(id);
+            if (fluid != null) {
+                return HeatSource.FluidHeatSource.of(fluid);
+            }
+            return null;
         }
 
         public Builder satisfies(String... requirements) {
