@@ -21,12 +21,17 @@ import net.minecraft.resources.ResourceLocation;
 
 public class HeatJSKubeJSPlugin implements KubeJSPlugin {
     public static final EventGroup GROUP = EventGroup.of("CreateHeatJS");
-    public static final EventHandler REGISTRY_HEAT = GROUP.server("registerHeatEvent", () -> RegisterHeatEvent.class);
+    public static final EventHandler REGISTRY_HEAT = GROUP.startup("registerHeatEvent", () -> RegisterHeatEvent.class);
     public static final ResourceLocation HEAT_LEVEL_SCHEMA_FUNCTION_ID = CreateHeatJS.asResource("heat_level");
 
     @Override
     public void registerEvents(EventGroupRegistry registry) {
         registry.register(GROUP);
+    }
+
+    @Override
+    public void initStartup() {
+        HeatJSKubeJSPlugin.REGISTRY_HEAT.post(new RegisterHeatEvent());
     }
 
     @Override

@@ -18,7 +18,6 @@ public class CreateHeatJS {
 
     public CreateHeatJS(IEventBus modEventBus) {
         modEventBus.addListener(HeatManager.getInstance()::onFMLCommonSetup);
-        NeoForge.EVENT_BUS.addListener(CommonEvents::onAddReloadListener);
     }
 
     public static ResourceLocation asResource(String path) {
