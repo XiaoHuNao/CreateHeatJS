@@ -35,7 +35,7 @@ public abstract class PackingCategoryMixin extends BasinCategory {
             cancellable = true
     )
     public void chj$draw(BasinRecipe recipe, IRecipeSlotsView iRecipeSlotsView, GuiGraphics graphics, double mouseX, double mouseY, CallbackInfo ci) {
-        if (!CategoryHelper.drawCustomHeatSource(graphics, iRecipeSlotsView, recipe,getBackground().getWidth() / 2 + 3, 55)) {
+        if (!CategoryHelper.drawCustomHeatSource(graphics, iRecipeSlotsView, recipe, getBackground().getWidth() / 2 + 3, 55, getBackground().getWidth(), getBackground().getHeight(), mouseX, mouseY)) {
             return;
         }
         press.draw(graphics, getBackground().getWidth() / 2 + 3, 34);

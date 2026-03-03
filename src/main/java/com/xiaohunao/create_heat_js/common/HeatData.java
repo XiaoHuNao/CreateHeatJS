@@ -9,6 +9,8 @@ import java.util.Set;
 import java.util.function.BiPredicate;
 import java.util.function.Predicate;
 
+import javax.annotation.Nullable;
+
 import com.simibubi.create.content.processing.burner.BlazeBurnerBlock;
 import com.simibubi.create.content.processing.recipe.HeatCondition;
 import com.xiaohunao.create_heat_js.common.mixin.extensions.HeatConditionExpandAccessor;
@@ -17,6 +19,7 @@ import com.xiaohunao.create_heat_js.common.mixin.extensions.HeatLevelExpandAcces
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
+import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.ItemStack;
@@ -122,8 +125,20 @@ public class HeatData {
         return this;
     }
 
+    public HeatData addHeatSource(@Nullable Component infoTooltip, Block... blocks) {
+        for (Block block : blocks) {
+            this.heatSources.add(HeatSource.BlockHeatSource.of(block, infoTooltip));
+        }
+        return this;
+    }
+
     public HeatData addHeatSource(BlockState... blockStates) {
         this.heatSources.add(HeatSource.BlockStateHeatSource.of(blockStates));
+        return this;
+    }
+
+    public HeatData addHeatSource(@Nullable Component infoTooltip, BlockState... blockStates) {
+        this.heatSources.add(HeatSource.BlockStateHeatSource.of(infoTooltip, blockStates));
         return this;
     }
 
@@ -132,13 +147,28 @@ public class HeatData {
         return this;
     }
 
+    public HeatData addHeatSourceBlockTag(TagKey<Block> blockTag, @Nullable Component infoTooltip) {
+        this.heatSources.add(HeatSource.BlockTagHeatSource.of(blockTag, infoTooltip));
+        return this;
+    }
+
     public HeatData addHeatSource(Fluid fluid) {
         this.heatSources.add(HeatSource.FluidHeatSource.of(fluid));
         return this;
     }
 
+    public HeatData addHeatSource(Fluid fluid, @Nullable Component infoTooltip) {
+        this.heatSources.add(HeatSource.FluidHeatSource.of(fluid, infoTooltip));
+        return this;
+    }
+
     public HeatData addHeatSourceFluidTag(TagKey<Fluid> fluidTag) {
         this.heatSources.add(HeatSource.FluidTagHeatSource.of(fluidTag));
+        return this;
+    }
+
+    public HeatData addHeatSourceFluidTag(TagKey<Fluid> fluidTag, @Nullable Component infoTooltip) {
+        this.heatSources.add(HeatSource.FluidTagHeatSource.of(fluidTag, infoTooltip));
         return this;
     }
 
@@ -175,6 +205,42 @@ public class HeatData {
             return this;
         }
         this.heatSources.add(HeatSource.FunctionalHeatSource.of(function));
+        return this;
+    }
+
+    public HeatData addHeatSourceIf(BiPredicate<Level, BlockPos> function, @Nullable Component infoTooltip) {
+        this.heatSources.add(HeatSource.FunctionalHeatSource.of(function, infoTooltip));
+        return this;
+    }
+
+    public HeatData addHeatSourceIf(BiPredicate<Level, BlockPos> function, Block block, @Nullable Component infoTooltip) {
+        this.heatSources.add(HeatSource.FunctionalHeatSource.of(function, HeatSource.BlockHeatSource.of(block), infoTooltip));
+        return this;
+    }
+
+    public HeatData addHeatSourceIf(BiPredicate<Level, BlockPos> function, Fluid fluid, @Nullable Component infoTooltip) {
+        this.heatSources.add(HeatSource.FunctionalHeatSource.of(function, HeatSource.FluidHeatSource.of(fluid), infoTooltip));
+        return this;
+    }
+
+    public HeatData addHeatSourceIf(BiPredicate<Level, BlockPos> function, TagKey<?> tag, @Nullable Component infoTooltip) {
+        if (tag == null) {
+            this.heatSources.add(HeatSource.FunctionalHeatSource.of(function, infoTooltip));
+            return this;
+        }
+        if (Registries.BLOCK.equals(tag.registry())) {
+            @SuppressWarnings("unchecked")
+            TagKey<Block> blockTag = (TagKey<Block>) tag;
+            this.heatSources.add(HeatSource.FunctionalHeatSource.of(function, HeatSource.BlockTagHeatSource.of(blockTag), infoTooltip));
+            return this;
+        }
+        if (Registries.FLUID.equals(tag.registry())) {
+            @SuppressWarnings("unchecked")
+            TagKey<Fluid> fluidTag = (TagKey<Fluid>) tag;
+            this.heatSources.add(HeatSource.FunctionalHeatSource.of(function, HeatSource.FluidTagHeatSource.of(fluidTag), infoTooltip));
+            return this;
+        }
+        this.heatSources.add(HeatSource.FunctionalHeatSource.of(function, infoTooltip));
         return this;
     }
 
@@ -246,6 +312,13 @@ public class HeatData {
             return this;
         }
 
+        public Builder addHeatSource(HeatSource heatSource, @Nullable Component infoTooltip) {
+            if (heatSource != null) {
+                this.heatSources.add(heatSource.withInfoTooltip(infoTooltip));
+            }
+            return this;
+        }
+
         /**
          * 添加热源（支持字符串格式）
          * 支持的格式：
@@ -267,15 +340,34 @@ public class HeatData {
             return this;
         }
 
+        public Builder addHeatSource(String heatSource, @Nullable Component infoTooltip) {
+            HeatSource parsed = createHeatSourceFromString(heatSource);
+            if (parsed != null) {
+                this.heatSources.add(parsed.withInfoTooltip(infoTooltip));
+            }
+            return this;
+        }
+
 
         public Builder addFunctionalHeatSource(BiPredicate<Level, BlockPos> function) {
             this.heatSources.add(HeatSource.FunctionalHeatSource.of(function));
             return this;
         }
 
+        public Builder addFunctionalHeatSource(BiPredicate<Level, BlockPos> function, @Nullable Component infoTooltip) {
+            this.heatSources.add(HeatSource.FunctionalHeatSource.of(function, infoTooltip));
+            return this;
+        }
+
         public Builder addHeatSourceIf(BiPredicate<Level, BlockPos> function, String heatSource) {
             HeatSource display = createHeatSourceFromString(heatSource);
             this.heatSources.add(HeatSource.FunctionalHeatSource.of(function, display));
+            return this;
+        }
+
+        public Builder addHeatSourceIf(BiPredicate<Level, BlockPos> function, String heatSource, @Nullable Component infoTooltip) {
+            HeatSource display = createHeatSourceFromString(heatSource);
+            this.heatSources.add(HeatSource.FunctionalHeatSource.of(function, display, infoTooltip));
             return this;
         }
 
@@ -287,8 +379,20 @@ public class HeatData {
             return this;
         }
 
+        public Builder addBlockHeatSource(@Nullable Component infoTooltip, Block... blocks) {
+            for (Block block : blocks) {
+                this.heatSources.add(HeatSource.BlockHeatSource.of(block, infoTooltip));
+            }
+            return this;
+        }
+
         public Builder addBlockStateHeatSource(BlockState... blockStates) {
             this.heatSources.add(HeatSource.BlockStateHeatSource.of(blockStates));
+            return this;
+        }
+
+        public Builder addBlockStateHeatSource(@Nullable Component infoTooltip, BlockState... blockStates) {
+            this.heatSources.add(HeatSource.BlockStateHeatSource.of(infoTooltip, blockStates));
             return this;
         }
 
@@ -297,13 +401,28 @@ public class HeatData {
             return this;
         }
 
+        public Builder addBlockTagHeatSource(TagKey<Block> blockTag, @Nullable Component infoTooltip) {
+            this.heatSources.add(HeatSource.BlockTagHeatSource.of(blockTag, infoTooltip));
+            return this;
+        }
+
         public Builder addFluidHeatSource(Fluid fluid) {
             this.heatSources.add(HeatSource.FluidHeatSource.of(fluid));
             return this;
         }
 
+        public Builder addFluidHeatSource(Fluid fluid, @Nullable Component infoTooltip) {
+            this.heatSources.add(HeatSource.FluidHeatSource.of(fluid, infoTooltip));
+            return this;
+        }
+
         public Builder addFluidTagHeatSource(TagKey<Fluid> fluidTag) {
             this.heatSources.add(HeatSource.FluidTagHeatSource.of(fluidTag));
+            return this;
+        }
+
+        public Builder addFluidTagHeatSource(TagKey<Fluid> fluidTag, @Nullable Component infoTooltip) {
+            this.heatSources.add(HeatSource.FluidTagHeatSource.of(fluidTag, infoTooltip));
             return this;
         }
 
