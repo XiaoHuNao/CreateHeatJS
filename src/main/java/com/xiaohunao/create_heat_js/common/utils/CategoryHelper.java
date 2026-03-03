@@ -17,8 +17,10 @@ import mezz.jei.api.gui.ingredient.IRecipeSlotView;
 import mezz.jei.api.gui.ingredient.IRecipeSlotsView;
 import mezz.jei.api.recipe.RecipeIngredientRole;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
+import net.minecraft.util.FormattedCharSequence;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.state.BlockState;
 
@@ -72,7 +74,34 @@ public class CategoryHelper {
                 graphics.fill(ix - 1, iy - 1, ix + s + 1, iy + s + 1, bg);
                 graphics.drawString(Minecraft.getInstance().font, "?", ix + 2, iy + 1, fg, false);
                 if (hov) {
-                    graphics.renderTooltip(Minecraft.getInstance().font, info, (int) mouseX, (int) mouseY);
+                    Minecraft mc = Minecraft.getInstance();
+                    Font font = mc.font;
+                    int margin = 4;
+                    int contentW = font.width(info);
+                    int maxPanelW = Math.max(120, backgroundWidth - margin * 2 - 8);
+                    int splitW = Math.min(contentW, maxPanelW);
+                    List<FormattedCharSequence> lines = font.split(info, splitW);
+                    int tooltipWidth = 0;
+                    for (FormattedCharSequence fs : lines) {
+                        tooltipWidth = Math.max(tooltipWidth, font.width(fs));
+                    }
+                    tooltipWidth += 8;
+                    int tooltipHeight = 8 + lines.size() * (font.lineHeight + 1);
+                    int tx = (int) mouseX;
+                    int ty = (int) mouseY;
+                    if (tx + tooltipWidth > backgroundWidth - margin) {
+                        if ((int) mouseX - tooltipWidth >= margin) {
+                            tx = (int) mouseX - tooltipWidth;
+                        } else {
+                            tx = margin;
+                        }
+                    }
+                    if (ty + tooltipHeight > backgroundHeight - margin) {
+                        ty = backgroundHeight - tooltipHeight - margin;
+                    }
+                    if (tx < margin) tx = margin;
+                    if (ty < margin) ty = margin;
+                    graphics.renderTooltip(font, lines, tx, ty);
                 }
             }
         }

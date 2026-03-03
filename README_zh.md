@@ -24,6 +24,7 @@
 ClientEvents.lang("en_us", (event) => {
     event.add("create.recipe.heat_requirement.blaze", "Blaze");
     event.add("create.recipe.heat_requirement.cryotheum", "Cryotheum");
+    event.add("create_heat_js.heat_source.cryotheum.soul_lantern.tip", "needs to be in the nether dimension");
 });
 ```
 
@@ -57,7 +58,7 @@ CreateHeatJS.registerHeatEvent(event => {
                 return level.getBlockState(pos).block.id === "minecraft:soul_lantern"
             }
             return false
-        })
+        },"minecraft:soul_lantern",Component.translatable("create_heat_js.heat_source.cryotheum.soul_lantern.tip"))
 
         // 关系网：满足 HEATED 条件
         .satisfies("HEATED")
