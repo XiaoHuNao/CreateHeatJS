@@ -6,10 +6,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.WeakHashMap;
 
+import javax.annotation.Nullable;
+
 import com.xiaohunao.create_heat_js.common.HeatData;
 import com.xiaohunao.create_heat_js.common.HeatSource;
 
 import net.minecraft.Util;
+import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.BucketItem;
 import net.minecraft.world.item.Item;
@@ -18,6 +21,8 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.Fluid;
+import net.minecraftforge.fluids.FluidStack;
+import net.minecraftforge.fluids.FluidUtil;
 import net.minecraftforge.registries.ForgeRegistries;
 
 
@@ -25,7 +30,21 @@ public class HeatSourceRendererHelper {
     private static final long CAROUSEL_MS = 1000L;
     private static final Map<HeatData, List<Block>> DISPLAY_BLOCK_CACHE = Collections.synchronizedMap(new WeakHashMap<>());
     private static final Map<HeatData, List<ItemStack>> DISPLAY_STACK_CACHE = Collections.synchronizedMap(new WeakHashMap<>());
+    private static final Map<HeatData, List<DisplayEntry>> DISPLAY_ENTRY_CACHE = Collections.synchronizedMap(new WeakHashMap<>());
     private static Map<Block, ItemStack> LEGACY_BLOCK_BUCKET_STACKS;
+
+    public static final class DisplayEntry {
+        public final Block block;
+        public final ItemStack displayStack;
+        @Nullable
+        public final Component infoTooltip;
+
+        private DisplayEntry(Block block, ItemStack displayStack, @Nullable Component infoTooltip) {
+            this.block = block;
+            this.displayStack = displayStack;
+            this.infoTooltip = infoTooltip;
+        }
+    }
 
     /**
      * 从 HeatData 中获取一个代表性的 BlockState 用于渲染
@@ -42,6 +61,14 @@ public class HeatSourceRendererHelper {
         return blocks.get(0).defaultBlockState();
     }
 
+    public static int getCarouselIndex(HeatData heatData) {
+        List<DisplayEntry> entries = getDisplayEntries(heatData);
+        if (entries.isEmpty()) {
+            return 0;
+        }
+        return (int) ((Util.getMillis() / CAROUSEL_MS) % entries.size());
+    }
+
     /**
      * 获取用于轮播展示的 BlockState
      * 根据当前时间轮流返回 HeatData 中包含的所有热源方块。
@@ -50,12 +77,97 @@ public class HeatSourceRendererHelper {
      * @return 当前时间点应该显示的方块状态
      */
     public static BlockState getCarouselDisplayBlockState(HeatData heatData) {
-        List<Block> blocks = getDisplayBlocks(heatData);
-        if (blocks.isEmpty()) {
+        List<DisplayEntry> entries = getDisplayEntries(heatData);
+        if (entries.isEmpty()) {
             return null;
         }
-        int index = (int) ((Util.getMillis() / CAROUSEL_MS) % blocks.size());
-        return blocks.get(index).defaultBlockState();
+        int index = getCarouselIndex(heatData);
+        return entries.get(index).block.defaultBlockState();
+    }
+
+    public static List<DisplayEntry> getDisplayEntries(HeatData heatData) {
+        if (heatData == null) {
+            return List.of();
+        }
+        List<DisplayEntry> cached = DISPLAY_ENTRY_CACHE.get(heatData);
+        if (cached != null) {
+            return cached;
+        }
+
+        LinkedHashMap<Block, DisplayEntry> result = new LinkedHashMap<>();
+        List<HeatSource> heatSources = heatData.getHeatSources();
+        if (heatSources != null) {
+            for (HeatSource heatSource : heatSources) {
+                if (heatSource == null) {
+                    continue;
+                }
+                Component tooltip = heatSource.getInfoTooltip();
+                heatSource.forEachDisplayBlock(block -> {
+                    if (block == null) {
+                        return;
+                    }
+                    ItemStack stack = toDisplayStack(block);
+                    if (stack == null || stack.isEmpty()) {
+                        return;
+                    }
+                    DisplayEntry existing = result.get(block);
+                    if (existing == null) {
+                        result.put(block, new DisplayEntry(block, stack, tooltip));
+                        return;
+                    }
+                    if (existing.infoTooltip == null && tooltip != null) {
+                        result.put(block, new DisplayEntry(block, existing.displayStack, tooltip));
+                    }
+                });
+            }
+        }
+
+        List<DisplayEntry> entries = List.copyOf(result.values());
+        List<Block> blocks = entries.stream().map(e -> e.block).toList();
+        List<ItemStack> stacks = entries.stream().map(e -> e.displayStack).toList();
+        DISPLAY_ENTRY_CACHE.put(heatData, entries);
+        DISPLAY_BLOCK_CACHE.put(heatData, blocks);
+        DISPLAY_STACK_CACHE.put(heatData, stacks);
+        return entries;
+    }
+
+    @Nullable
+    public static DisplayEntry findDisplayEntry(HeatData heatData, BlockState state) {
+        if (heatData == null || state == null) {
+            return null;
+        }
+        Block block = state.getBlock();
+        if (block == null) {
+            return null;
+        }
+        for (DisplayEntry entry : getDisplayEntries(heatData)) {
+            if (entry != null && entry.block == block) {
+                return entry;
+            }
+        }
+        return null;
+    }
+
+    @Nullable
+    public static Component findInfoTooltip(HeatData heatData, BlockState state) {
+        DisplayEntry entry = findDisplayEntry(heatData, state);
+        return entry != null ? entry.infoTooltip : null;
+    }
+
+    @Nullable
+    public static DisplayEntry getDisplayEntryAtIndex(HeatData heatData, int index) {
+        List<DisplayEntry> entries = getDisplayEntries(heatData);
+        if (entries.isEmpty()) {
+            return null;
+        }
+        int clamped = Math.max(0, Math.min(index, entries.size() - 1));
+        return entries.get(clamped);
+    }
+
+    @Nullable
+    public static ItemStack getDisplayStackAtIndex(HeatData heatData, int index) {
+        DisplayEntry entry = getDisplayEntryAtIndex(heatData, index);
+        return entry != null ? entry.displayStack : null;
     }
 
     /**
@@ -73,20 +185,9 @@ public class HeatSourceRendererHelper {
         if (cached != null) {
             return cached;
         }
-
-        LinkedHashMap<Block, ItemStack> result = new LinkedHashMap<>();
-        List<HeatSource> heatSources = heatData.getHeatSources();
-        if (heatSources != null) {
-            for (HeatSource heatSource : heatSources) {
-                heatSource.forEachDisplayBlock(block -> putIfDisplayable(result, block));
-            }
-        }
-
-        List<Block> blocks = List.copyOf(result.keySet());
-        List<ItemStack> stacks = List.copyOf(result.values());
-        DISPLAY_BLOCK_CACHE.put(heatData, blocks);
-        DISPLAY_STACK_CACHE.put(heatData, stacks);
-        return blocks;
+        getDisplayEntries(heatData);
+        cached = DISPLAY_BLOCK_CACHE.get(heatData);
+        return cached != null ? cached : List.of();
     }
 
     /**
@@ -104,7 +205,7 @@ public class HeatSourceRendererHelper {
             return cached;
         }
 
-        getDisplayBlocks(heatData);
+        getDisplayEntries(heatData);
         cached = DISPLAY_STACK_CACHE.get(heatData);
         return cached != null ? cached : List.of();
     }
@@ -116,7 +217,7 @@ public class HeatSourceRendererHelper {
      * @return 如果有可渲染的热源返回 true，否则返回 false
      */
     public static boolean hasRenderableHeatSource(HeatData heatData) {
-        return !getDisplayBlocks(heatData).isEmpty();
+        return !getDisplayEntries(heatData).isEmpty();
     }
 
     /**
@@ -134,11 +235,8 @@ public class HeatSourceRendererHelper {
         if (item instanceof BlockItem blockItem) {
             return blockItem.getBlock().defaultBlockState();
         }
-        if (item instanceof BucketItem bucketItem) {
-            Fluid fluid = bucketItem.getFluid();
-            if (fluid == null) {
-                return null;
-            }
+        Fluid fluid = FluidUtil.getFluidContained(stack).map(FluidStack::getFluid).orElse(null);
+        if (fluid != null) {
             return fluid.defaultFluidState().createLegacyBlock();
         }
         return null;

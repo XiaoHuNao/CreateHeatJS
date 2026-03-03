@@ -8,10 +8,15 @@ import dev.latvian.mods.kubejs.event.EventHandler;
 
 public class HeatJSKubeJSPlugin extends KubeJSPlugin {
     public final static EventGroup GROUP = EventGroup.of("CreateHeatJS");
-    public final static EventHandler REGISTRY_HEAT = GROUP.server("registerHeatEvent", () -> RegisterHeatEvent.class);
+    public final static EventHandler REGISTRY_HEAT = GROUP.startup("registerHeatEvent", () -> RegisterHeatEvent.class);
 
     @Override
     public void registerEvents() {
         GROUP.register();
+    }
+
+    @Override
+    public void initStartup() {
+        HeatJSKubeJSPlugin.REGISTRY_HEAT.post(new RegisterHeatEvent());
     }
 }

@@ -4,7 +4,10 @@ import java.util.List;
 import java.util.function.BiPredicate;
 import java.util.function.Consumer;
 
+import javax.annotation.Nullable;
+
 import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.Component;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
@@ -14,6 +17,23 @@ import net.minecraftforge.registries.ForgeRegistries;
 
 
 public class HeatSource {
+    @Nullable
+    private Component infoTooltip;
+
+    @Nullable
+    public Component getInfoTooltip() {
+        return infoTooltip;
+    }
+
+    public HeatSource withInfoTooltip(@Nullable Component infoTooltip) {
+        this.infoTooltip = infoTooltip;
+        return this;
+    }
+
+    public boolean hasInfoTooltip() {
+        return infoTooltip != null;
+    }
+
     public boolean matches(Level level, BlockPos pos, BlockState state) {
         return false;
     }
@@ -30,6 +50,12 @@ public class HeatSource {
 
         public static BlockHeatSource of(Block block) {
             return new BlockHeatSource(block);
+        }
+
+        public static BlockHeatSource of(Block block, @Nullable Component infoTooltip) {
+            BlockHeatSource source = new BlockHeatSource(block);
+            source.withInfoTooltip(infoTooltip);
+            return source;
         }
 
         @Override
@@ -54,6 +80,12 @@ public class HeatSource {
 
         public static BlockStateHeatSource of(BlockState... blockStates) {
             return new BlockStateHeatSource(List.of(blockStates));
+        }
+
+        public static BlockStateHeatSource of(@Nullable Component infoTooltip, BlockState... blockStates) {
+            BlockStateHeatSource source = new BlockStateHeatSource(List.of(blockStates));
+            source.withInfoTooltip(infoTooltip);
+            return source;
         }
 
         @Override
@@ -88,6 +120,12 @@ public class HeatSource {
             return new BlockTagHeatSource(tag);
         }
 
+        public static BlockTagHeatSource of(TagKey<Block> tag, @Nullable Component infoTooltip) {
+            BlockTagHeatSource source = new BlockTagHeatSource(tag);
+            source.withInfoTooltip(infoTooltip);
+            return source;
+        }
+
         @Override
         public boolean matches(Level level, BlockPos pos, BlockState state) {
             return tag != null && state != null && state.is(tag);
@@ -117,6 +155,12 @@ public class HeatSource {
             return new FluidHeatSource(fluid);
         }
 
+        public static FluidHeatSource of(Fluid fluid, @Nullable Component infoTooltip) {
+            FluidHeatSource source = new FluidHeatSource(fluid);
+            source.withInfoTooltip(infoTooltip);
+            return source;
+        }
+
         @Override
         public boolean matches(Level level, BlockPos pos, BlockState state) {
             return fluid != null && state != null && state.getFluidState().getType() == fluid;
@@ -141,6 +185,12 @@ public class HeatSource {
 
         public static FluidTagHeatSource of(TagKey<Fluid> tag) {
             return new FluidTagHeatSource(tag);
+        }
+
+        public static FluidTagHeatSource of(TagKey<Fluid> tag, @Nullable Component infoTooltip) {
+            FluidTagHeatSource source = new FluidTagHeatSource(tag);
+            source.withInfoTooltip(infoTooltip);
+            return source;
         }
 
         @Override
@@ -172,18 +222,43 @@ public class HeatSource {
 
     public static class FunctionalHeatSource extends HeatSource{
         public final BiPredicate<Level, BlockPos> function;
+        public final HeatSource displayHeatSource;
 
-        private FunctionalHeatSource(BiPredicate<Level, BlockPos> function) {
+        private FunctionalHeatSource(BiPredicate<Level, BlockPos> function, HeatSource displayHeatSource) {
             this.function = function;
+            this.displayHeatSource = displayHeatSource;
         }
 
         public static FunctionalHeatSource of(BiPredicate<Level, BlockPos> function) {
-            return new FunctionalHeatSource(function);
+            return new FunctionalHeatSource(function, null);
+        }
+
+        public static FunctionalHeatSource of(BiPredicate<Level, BlockPos> function, HeatSource displayHeatSource) {
+            return new FunctionalHeatSource(function, displayHeatSource);
+        }
+
+        public static FunctionalHeatSource of(BiPredicate<Level, BlockPos> function, @Nullable Component infoTooltip) {
+            FunctionalHeatSource source = new FunctionalHeatSource(function, null);
+            source.withInfoTooltip(infoTooltip);
+            return source;
+        }
+
+        public static FunctionalHeatSource of(BiPredicate<Level, BlockPos> function, HeatSource displayHeatSource, @Nullable Component infoTooltip) {
+            FunctionalHeatSource source = new FunctionalHeatSource(function, displayHeatSource);
+            source.withInfoTooltip(infoTooltip);
+            return source;
         }
 
         @Override
         public boolean matches(Level level, BlockPos pos, BlockState state) {
             return function != null && level != null && pos != null && function.test(level, pos);
+        }
+
+        @Override
+        public void forEachDisplayBlock(Consumer<Block> consumer) {
+            if (displayHeatSource != null && consumer != null) {
+                displayHeatSource.forEachDisplayBlock(consumer);
+            }
         }
     }
 }

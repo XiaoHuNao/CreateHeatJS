@@ -76,8 +76,6 @@ public class HeatManager {
                 }
             });
         });
-
-        CreateHeatJS.heatProvider.addDefaultHeatSources();
     }
 
     public Map<BlockState, BlazeBurnerBlock.HeatLevel> getHeatLevels(Block block) {

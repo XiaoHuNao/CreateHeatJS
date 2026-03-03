@@ -24,10 +24,11 @@ Please use [KubeJS Create Mod](https://modrinth.com/mod/kubejs-create/) when add
 ClientEvents.lang("en_us", (event) => {
     event.add("create.recipe.heat_requirement.blaze", "Blaze");
     event.add("create.recipe.heat_requirement.cryotheum", "Cryotheum");
+    event.add("create_heat_js.heat_source.cryotheum.soul_lantern.tip", "needs to be in the nether dimension");
 });
 ```
 
-### Server Scripts
+### Startup Scripts
 
 ```js
 ServerEvents.recipes((event) => {
@@ -60,7 +61,7 @@ CreateHeatJS.registerHeatEvent(event => {
                 return level.getBlockState(pos).block.id === "minecraft:soul_lantern"
             }
             return false
-        })
+        },"minecraft:soul_lantern",Component.translatable("create_heat_js.heat_source.cryotheum.soul_lantern.tip"))
 
         // Relationship: Satisfies HEATED condition
         .satisfies("HEATED")

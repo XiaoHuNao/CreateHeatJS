@@ -7,6 +7,8 @@ import dev.latvian.mods.kubejs.recipe.RecipeJS;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 
+import java.util.Locale;
+
 
 @Mixin(
     value = {ProcessingRecipeSchema.ProcessingRecipeJS.class},
@@ -20,12 +22,8 @@ public abstract class ProcessingRecipeJSMixin extends RecipeJS {
 
     @Unique
     private static String normalizeHeatRequirement(String heatLevel) {
-        if (heatLevel == null) {
-            return null;
-        }
-
         HeatManager heatManager = HeatManager.getInstance();
-        HeatData heatData = heatManager.getHeatData(heatLevel);
+        HeatData heatData = heatManager.getHeatData(heatLevel.toUpperCase(Locale.ROOT));
         if (heatData == null) {
             throw new IllegalArgumentException("Unknown heat level: " + heatLevel);
         }
