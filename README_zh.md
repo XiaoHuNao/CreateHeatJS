@@ -42,20 +42,18 @@ ServerEvents.recipes((event) => {
 ```js
 CreateHeatJS.registerHeatEvent(event => {
     // 1. 基础示例：注册自定义热源 BLAZE
-    // 使用 addHeatSource(String blockId) - 最常用的方式
     event.registerHeat("BLAZE", builder => builder
         .color(0xFF4500)
-        .addHeatSource("minecraft:magma_block") //Block
+        .addHeatSource("minecraft:magma_block")
         .satisfies("HEATED")
     )
 
     // 2. 高级示例：注册 CRYOTHEUM
-    // 展示所有重载方法的使用
     event.registerHeat("CRYOTHEUM", builder => builder
         .color(0x00BFFF)
-        .addHeatSource("#minecraft:ice") //BlockTags
+        .addHeatSource("#minecraft:ice")
 
-        // 示例：如果在下界 (dimension check)，且方块是 soul_lantern
+        // 条件热源：仅在下界生效
         .addHeatSourceIf((level, pos) => {
             if (level.dimension === "minecraft:the_nether") {
                 return level.getBlockState(pos).block.id === "minecraft:soul_lantern"
@@ -63,59 +61,142 @@ CreateHeatJS.registerHeatEvent(event => {
             return false
         },"minecraft:soul_lantern",Component.translatable("create_heat_js.heat_source.cryotheum.soul_lantern.tip"))
 
-        // 关系网：满足 HEATED 条件
         .satisfies("HEATED")
-
-        // 条件关系网：仅在特定配方中满足
-        // 示例：如果配方 ID  "create:mixing/lava_from_cobble"，则视为满足 "SUPERHEATED"
         .satisfiesIf("SUPERHEATED", ctx => ctx.getRecipeId() == "create:mixing/lava_from_cobble"))
 
-    /**
-     * 添加热源（支持字符串格式）
-     * 支持的格式：
-     * - blocktag:namespace:path (方块标签)
-     * - fluidtag:namespace:path (流体标签)
-     * - block:namespace:path (方块 ID)
-     * - fluid:namespace:path (流体 ID)
-     * - namespace:path[prop=value] (方块状态)
-     * - #namespace:path (尝试匹配方块或流体标签)
-     *
-     * @param heatSource 热源
-     * @return Builder
-     */
-    //addHeatSource(String heatSource)
-
-    /**
-     * @param heatSourceDisplayItem jei热源槽显示的物品
-     * @return Builder
-     */
-    //heatSourceSlotItem(ItemStack heatSourceDisplayItem)
-
-    /**
-     * @param catalystDisplayItem jei催化物槽显示的物品
-     * @return Builder
-     */
-    //catalyst(ItemStack catalystDisplayItem)
-
-
-    //可以通过satisfies或satisfiesIf方法完善热量等级关系网,拓展原Create模组线性关系等级,允许竖向,横向,交叉关系
-
-    //竖向关系：使用satisfies()创建线性层级
-    //示例：TEST1满足HEATED需求（需要HEATED的配方可以使用TEST1）
-    // event.registerHeat("TEST1", builder => builder.satisfies("HEATED"))
-
-    //横向关系：注册新等级但不绑定到现有等级
-    //示例：COLD是独立的，不满足任何Create热量条件
-
-    //交叉关系：如上注册的CRYOTHEUM等级,属于横向独立体系,但使用satisfies和satisfiesIf交叉回Create模组的SUPERHEATED, HEATED线性关系
-
-
     // 3. 修改已存在的热量等级
-    // 使用 modifyHeat() 向已存在的热量等级添加热源或关系
     event.modifyHeat("SUPERHEATED", data => data
-        .satisfies("TEST1") // SUPERHEATED 满足 TEST1（需要 TEST1 的配方可以使用 SUPERHEATED）
+        .satisfies("CUSTOM_LEVEL")
     )
 })
+
+/**
+ * 热源字符串格式：
+ * - blocktag:namespace:path (方块标签)
+ * - fluidtag:namespace:path (流体标签)
+ * - block:namespace:path (方块 ID)
+ * - fluid:namespace:path (流体 ID)
+ * - namespace:path[prop=value] (方块状态)
+ * - #namespace:path (尝试匹配方块或流体标签)
+ */
+```
+
+## 理解 `satisfies` 关系网
+
+### 基本概念
+
+`satisfies()` 建立的是**单向关系**：如果 `A.satisfies("B")`，则：
+- 拥有 **A** 等级的热源可以完成需要 **B** 的配方
+- 但拥有 **B** 等级的热源**不能**完成需要 **A** 的配方
+
+```
+A ──satisfies──> B    表示    A ≥ B
+
+配方需要 B ──> 可以用 A 完成 ✓
+配方需要 A ──> 不能用 B 完成 ✗
+```
+
+### 示例：Create 原版的层级关系
+
+Create 模组内置关系：`SUPERHEATED → HEATED`
+
+| 配方需求 | 烈焰人燃烧室 (HEATED) | 烈焰人燃烧室 (SUPERHEATED) |
+|---------|---------------------|---------------------------|
+| HEATED | ✓ | ✓ |
+| SUPERHEATED | ✗ | ✓ |
+
+意思：SUPERHEATED 满足 HEATED，但 HEATED 不满足 SUPERHEATED。
+
+### 你的自定义关系
+
+当你写：
+```js
+event.registerHeat("BLAZE", builder => builder
+    .satisfies("HEATED")
+)
+```
+
+你创建的是：`BLAZE → HEATED`
+
+| 配方需求 | BLAZE 热源 | 烈焰人燃烧室 (HEATED) |
+|---------|-----------|----------------------|
+| HEATED | ✓ | ✓ |
+| BLAZE | ✓ | ✗ |
+
+### 三种关系类型
+
+#### 1. 竖向关系（线性层级）
+```js
+// 创建链式关系：LEVEL3 → LEVEL2 → LEVEL1
+event.registerHeat("LEVEL2", builder => builder.satisfies("LEVEL1"))
+event.registerHeat("LEVEL3", builder => builder.satisfies("LEVEL2"))
+```
+结果：LEVEL3 可以满足 LEVEL2 和 LEVEL1（传递性）
+
+#### 传递性（自动兼容）
+
+关系具有**传递性**。如果你写：
+```js
+// Create 已有：SUPERHEATED → HEATED
+// 你添加：PYROTHEUM → SUPERHEATED
+event.registerHeat("PYROTHEUM", builder => builder
+    .satisfies("SUPERHEATED")
+)
+```
+
+PYROTHEUM 会**自动**满足 HEATED！不需要再写 `.satisfies("HEATED")`。
+
+```
+PYROTHEUM → SUPERHEATED → HEATED
+    │           │           │
+    └───────────┴───────────┘
+         (都能被 PYROTHEUM 满足)
+```
+
+| 配方需求 | PYROTHEUM |
+|---------|-----------|
+| HEATED | ✓ (自动) |
+| SUPERHEATED | ✓ |
+| PYROTHEUM | ✓ |
+
+#### 2. 横向关系（独立体系）
+```js
+// 没有 satisfies() - 完全独立
+event.registerHeat("COLD", builder => builder
+    .color(0x00BFFF)
+    .addHeatSource("#minecraft:ice")
+)
+```
+结果：COLD 是独立的，不与 Create 的热量系统产生关联
+
+#### 3. 交叉关系
+```js
+// CRYOTHEUM 是独立的，但也可以满足 Create 的条件
+event.registerHeat("CRYOTHEUM", builder => builder
+    .satisfies("HEATED")  // 可以满足 HEATED 配方
+    .satisfiesIf("SUPERHEATED", ctx => ctx.getRecipeId() == "特定配方")
+)
+```
+结果：CRYOTHEUM 是自己的等级，但可以交叉进入 Create 的层级体系
+
+### 关系图示
+
+```
+Create 原版：
+  NONE ← HEATED ← SUPERHEATED
+         (满足关系)
+
+你的自定义：
+  BLAZE ──satisfies──> HEATED
+  (BLAZE ≥ HEATED)
+
+合并后：
+  NONE ← HEATED ← SUPERHEATED
+          ↑
+          └── BLAZE
+
+需要 HEATED 的配方：可用 HEATED、SUPERHEATED、BLAZE
+需要 BLAZE 的配方：只能用 BLAZE
 ```
 
 [curseforge-badge]: https://raw.githubusercontent.com/intergrav/devins-badges/v3/assets/cozy/available/curseforge_vector.svg

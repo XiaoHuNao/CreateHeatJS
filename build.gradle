@@ -133,7 +133,7 @@ sourceSets.main.resources { srcDir 'src/generated/resources' }
 
 dependencies {
     implementation("com.simibubi.create:create-${minecraft_version}:${create_version}:slim") { transitive = false }
-    implementation("net.createmod.ponder:Ponder-NeoForge-${minecraft_version}:${ponder_version}")
+    implementation("net.createmod.ponder:ponder-neoforge:1.0.81+mc1.21.1")
     compileOnly("dev.engine-room.flywheel:flywheel-neoforge-api-${minecraft_version}:${flywheel_version}")
     runtimeOnly("dev.engine-room.flywheel:flywheel-neoforge-${minecraft_version}:${flywheel_version}")
     implementation("com.tterrag.registrate:Registrate:${registrate_version}")
@@ -142,9 +142,14 @@ dependencies {
     runtimeOnly("mezz.jei:jei-${minecraft_version}-neoforge:${jei_version}")
 
     api("dev.latvian.mods:kubejs-neoforge:$kubejs_version")
-    interfaceInjectionData("dev.latvian.mods:kubejs-neoforge:$kubejs_version")
+//    interfaceInjectionData("dev.latvian.mods:kubejs-neoforge:$kubejs_version")
 
-    implementation "curse.maven:kubejs-create-429371:7213667"
+    api("dev.latvian.mods:kubejs-create-neoforge:2101.3.1-build.18")
+//    implementation "curse.maven:kubejs-create-429371:7213667"
+
+    implementation "curse.maven:createaddition-439890:8083378"
+    implementation "curse.maven:create-low-heated-873945:8074971"
+    implementation "curse.maven:create-metallurgy-1007404:8128243"
 }
 
 // This block of code expands all declared replace properties in the specified resource targets.
