@@ -268,6 +268,9 @@ public class HeatData {
         if (level == null || pos == null || state == null) {
             return false;
         }
+        if (state.isAir()) {
+            return false;
+        }
         for (HeatSource heatSource : heatSources) {
             if (heatSource != null && heatSource.matches(level, pos, state)) {
                 return true;
@@ -462,7 +465,7 @@ public class HeatData {
                 ResourceLocation id = parseId(idStr);
                 if (id != null) {
                     Block block = BuiltInRegistries.BLOCK.get(id);
-                    if (block != null) {
+                    if (block != null && !block.defaultBlockState().isAir()) {
                         return HeatSource.BlockHeatSource.of(block);
                     }
                 }
@@ -511,12 +514,12 @@ public class HeatData {
             }
 
             Block block = BuiltInRegistries.BLOCK.get(id);
-            if (block != null) {
+            if (block != null && !block.defaultBlockState().isAir()) {
                 return HeatSource.BlockHeatSource.of(block);
             }
 
             Fluid fluid = BuiltInRegistries.FLUID.get(id);
-            if (fluid != null) {
+            if (fluid != null && fluid != net.minecraft.world.level.material.Fluids.EMPTY) {
                 return HeatSource.FluidHeatSource.of(fluid);
             }
             return null;

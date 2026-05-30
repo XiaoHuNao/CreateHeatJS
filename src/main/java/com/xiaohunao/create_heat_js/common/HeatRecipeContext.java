@@ -35,13 +35,13 @@ public class HeatRecipeContext {
             .stream()
             .filter(holder -> {
                 Recipe<?> holderRecipe = holder.value();
-                return holderRecipe == recipe || 
+                return holderRecipe == recipe ||
                        (holderRecipe.getType().equals(recipe.getType()) && holderRecipe.equals(recipe));
             })
             .findFirst();
 
         if (recipeHolder.isEmpty()) {
-            throw new IllegalStateException("Recipe not found in RecipeManager. Recipe type: " + typeId);
+            return new HeatRecipeContext(null, typeId);
         }
 
         ResourceLocation recipeId = recipeHolder.get().id();

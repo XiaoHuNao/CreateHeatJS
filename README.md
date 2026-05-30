@@ -37,13 +37,13 @@ ServerEvents.recipes((event) => {
 });
 ```
 
-### Server Scripts
+### Startup Scripts
 
 ```js
 CreateHeatJS.registerHeatEvent(event => {
     // 1. Basic Example: Register custom heat source BLAZE
     // Use addHeatSource(String blockId) - The most common way
-    event.registerHeat("BLAZE", builder => builder
+    event.registerHeat(" ", builder => builder
         .color(0xFF4500)
         .addHeatSource("minecraft:magma_block") //Block
         .satisfies("HEATED")
@@ -51,7 +51,7 @@ CreateHeatJS.registerHeatEvent(event => {
 
     // 2. Advanced Example: Register CRYOTHEUM
     // Demonstrates the use of all overloaded methods
-    event.registerHeat("CRYOTHEUM", data => data
+    event.registerHeat("CRYOTHEUM", builder => builder
         .color(0x00BFFF)
         .addHeatSource("#minecraft:ice") //BlockTags
 
@@ -84,32 +84,39 @@ CreateHeatJS.registerHeatEvent(event => {
      * @return Builder
      */
     //addHeatSource(String heatSource)
-    
+
     /**
      * @param heatSourceDisplayItem Item displayed in JEI heat source slot
      * @return Builder
      */
     //heatSourceSlotItem(ItemStack heatSourceDisplayItem)
-        
+
     /**
      * @param catalystDisplayItem Item displayed in JEI catalyst slot
      * @return Builder
      */
     //catalyst(ItemStack catalystDisplayItem)
-    
-    
-    // You can use satisfies or satisfiesIf methods to perfect the heat level network, 
+
+
+    // You can use satisfies or satisfiesIf methods to perfect the heat level network,
     // extending the original Create mod's linear relationship levels, allowing vertical, horizontal, and cross relationships.
-    
-    // Vertical Relationship
-    event.bindSatisfies("TEST1", "TEST2") // The effect here is similar to the "SUPERHEATED", "HEATED" linear relationship of the Create mod.
-    
-    // Horizontal Relationship
-    // Register a brand new level without using satisfies or satisfiesIf methods to bind the relationship network.
-    
-    // Cross Relationship
-    // The CRYOTHEUM level registered above belongs to a horizontal independent system, 
-    // but uses satisfies and satisfiesIf to cross back into the Create mod's SUPERHEATED, HEATED linear relationships.
+
+    // Vertical Relationship: Use satisfies() to create linear hierarchy
+    // Example: TEST1 satisfies HEATED requirement (recipes requiring HEATED can use TEST1)
+    // event.registerHeat("TEST1", builder => builder.satisfies("HEATED"))
+
+    // Horizontal Relationship: Register a new level without binding to existing ones
+    // Example: COLD is independent, not satisfying any Create heat conditions
+
+    // Cross Relationship: The CRYOTHEUM level above is horizontally independent,
+    // but uses satisfies() and satisfiesIf() to cross into Create's linear relationships.
+
+
+    // 3. Modify existing heat level
+    // Use modifyHeat() to add heat sources or relationships to existing heat levels
+    event.modifyHeat("SUPERHEATED", data => data
+        .satisfies("TEST1") // SUPERHEATED satisfies TEST1 (recipes requiring TEST1 can use SUPERHEATED)
+    )
 })
 ```
 

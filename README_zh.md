@@ -41,18 +41,21 @@ ServerEvents.recipes((event) => {
 
 ```js
 CreateHeatJS.registerHeatEvent(event => {
+    // 1. 基础示例：注册自定义热源 BLAZE
     // 使用 addHeatSource(String blockId) - 最常用的方式
     event.registerHeat("BLAZE", builder => builder
         .color(0xFF4500)
         .addHeatSource("minecraft:magma_block") //Block
         .satisfies("HEATED")
     )
-    
-    event.registerHeat("CRYOTHEUM", data => data
+
+    // 2. 高级示例：注册 CRYOTHEUM
+    // 展示所有重载方法的使用
+    event.registerHeat("CRYOTHEUM", builder => builder
         .color(0x00BFFF)
         .addHeatSource("#minecraft:ice") //BlockTags
 
-        // 示例：如果在下界 (dimension check)，且方块是 packed_ice
+        // 示例：如果在下界 (dimension check)，且方块是 soul_lantern
         .addHeatSourceIf((level, pos) => {
             if (level.dimension === "minecraft:the_nether") {
                 return level.getBlockState(pos).block.id === "minecraft:soul_lantern"
@@ -77,34 +80,41 @@ CreateHeatJS.registerHeatEvent(event => {
      * - namespace:path[prop=value] (方块状态)
      * - #namespace:path (尝试匹配方块或流体标签)
      *
-     * @param heatSource 热源 
+     * @param heatSource 热源
      * @return Builder
      */
     //addHeatSource(String heatSource)
-    
+
     /**
      * @param heatSourceDisplayItem jei热源槽显示的物品
      * @return Builder
      */
     //heatSourceSlotItem(ItemStack heatSourceDisplayItem)
-        
+
     /**
      * @param catalystDisplayItem jei催化物槽显示的物品
      * @return Builder
      */
     //catalyst(ItemStack catalystDisplayItem)
-    
-    
-    //可以通过satisfies或satisfiesIf方法完善热量等级网线网,拓展原Create模组线性关系等级,允许竖向,横向,交叉关系
-    
-    //竖向关系
-    event.bindSatisfies("TEST1", "TEST2")//这里的效果即可以类似Create模组的"SUPERHEATED", "HEATED" 线性关系
-    
-    //横向关系
-    即注册一个全新的等级并不使用satisfies或satisfiesIf方法绑定关系网
-    
-    //交叉关系
-    如上注册的CRYOTHEUM等级,属于横向独立体系,但使用satisfies和satisfiesIf交叉回Create模组的 `SUPERHEATED`, `HEATED`,线性关系
+
+
+    //可以通过satisfies或satisfiesIf方法完善热量等级关系网,拓展原Create模组线性关系等级,允许竖向,横向,交叉关系
+
+    //竖向关系：使用satisfies()创建线性层级
+    //示例：TEST1满足HEATED需求（需要HEATED的配方可以使用TEST1）
+    // event.registerHeat("TEST1", builder => builder.satisfies("HEATED"))
+
+    //横向关系：注册新等级但不绑定到现有等级
+    //示例：COLD是独立的，不满足任何Create热量条件
+
+    //交叉关系：如上注册的CRYOTHEUM等级,属于横向独立体系,但使用satisfies和satisfiesIf交叉回Create模组的SUPERHEATED, HEATED线性关系
+
+
+    // 3. 修改已存在的热量等级
+    // 使用 modifyHeat() 向已存在的热量等级添加热源或关系
+    event.modifyHeat("SUPERHEATED", data => data
+        .satisfies("TEST1") // SUPERHEATED 满足 TEST1（需要 TEST1 的配方可以使用 SUPERHEATED）
+    )
 })
 ```
 
