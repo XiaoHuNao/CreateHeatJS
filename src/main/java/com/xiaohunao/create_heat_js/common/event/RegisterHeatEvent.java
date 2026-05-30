@@ -22,7 +22,7 @@ public class RegisterHeatEvent extends EventJS {
         heatManager.registerHeatData(heatData);
     }
 
-    public void addHeatSource(String heatName, Consumer<HeatData> data) {
+    public void modifyHeat(String heatName, Consumer<HeatData> data) {
         HeatManager heatManager = HeatManager.getInstance();
         HeatData heatData = heatManager.getHeatData(heatName);
         if (heatData == null) {

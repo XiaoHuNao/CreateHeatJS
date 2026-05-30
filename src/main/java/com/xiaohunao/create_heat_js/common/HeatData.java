@@ -268,6 +268,10 @@ public class HeatData {
         if (level == null || pos == null || state == null) {
             return false;
         }
+        // 忽略空气方块，防止移除热源后方块位置仍被视为有效热源
+        if (state.isAir()) {
+            return false;
+        }
         for (HeatSource heatSource : heatSources) {
             if (heatSource != null && heatSource.matches(level, pos, state)) {
                 return true;
@@ -471,7 +475,7 @@ public class HeatData {
                 ResourceLocation id = parseId(idStr);
                 if (id != null) {
                     Block block = ForgeRegistries.BLOCKS.getValue(id);
-                    if (block != null) {
+                    if (block != null && !block.defaultBlockState().isAir()) {
                         return HeatSource.BlockHeatSource.of(block);
                     }
                 }
@@ -521,13 +525,15 @@ public class HeatData {
                 return null;
             }
 
+            // 优先尝试方块，检查是否为有效方块（非空气）
             Block block = ForgeRegistries.BLOCKS.getValue(id);
-            if (block != null) {
+            if (block != null && !block.defaultBlockState().isAir()) {
                 return HeatSource.BlockHeatSource.of(block);
             }
 
+            // 只有在明确是流体时才创建流体热源
             Fluid fluid = ForgeRegistries.FLUIDS.getValue(id);
-            if (fluid != null) {
+            if (fluid != null && !fluid.defaultFluidState().isEmpty()) {
                 return HeatSource.FluidHeatSource.of(fluid);
             }
             return null;
