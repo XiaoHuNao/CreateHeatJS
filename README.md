@@ -42,20 +42,18 @@ ServerEvents.recipes((event) => {
 ```js
 CreateHeatJS.registerHeatEvent(event => {
     // 1. Basic Example: Register custom heat source BLAZE
-    // Use addHeatSource(String blockId) - The most common way
-    event.registerHeat(" ", builder => builder
+    event.registerHeat("BLAZE", builder => builder
         .color(0xFF4500)
-        .addHeatSource("minecraft:magma_block") //Block
+        .addHeatSource("minecraft:magma_block")
         .satisfies("HEATED")
     )
 
     // 2. Advanced Example: Register CRYOTHEUM
-    // Demonstrates the use of all overloaded methods
     event.registerHeat("CRYOTHEUM", builder => builder
         .color(0x00BFFF)
-        .addHeatSource("#minecraft:ice") //BlockTags
+        .addHeatSource("#minecraft:ice")
 
-        // Example: If in the Nether (dimension check), and the block is soul_lantern
+        // Conditional heat source: only works in the Nether
         .addHeatSourceIf((level, pos) => {
             if (level.dimension === "minecraft:the_nether") {
                 return level.getBlockState(pos).block.id === "minecraft:soul_lantern"
@@ -63,61 +61,143 @@ CreateHeatJS.registerHeatEvent(event => {
             return false
         },"minecraft:soul_lantern",Component.translatable("create_heat_js.heat_source.cryotheum.soul_lantern.tip"))
 
-        // Relationship: Satisfies HEATED condition
         .satisfies("HEATED")
-
-        // Conditional Relationship: Satisfies only in specific recipes
-        // Example: If recipe ID is "create:mixing/lava_from_cobble", it is considered to satisfy "SUPERHEATED"
         .satisfiesIf("SUPERHEATED", ctx => ctx.getRecipeId() == "create:mixing/lava_from_cobble"))
 
-    /**
-     * Add heat source (supports string format)
-     * Supported formats:
-     * - blocktag:namespace:path (Block Tag)
-     * - fluidtag:namespace:path (Fluid Tag)
-     * - block:namespace:path (Block ID)
-     * - fluid:namespace:path (Fluid ID)
-     * - namespace:path[prop=value] (Block State)
-     * - #namespace:path (Try to match Block or Fluid Tag)
-     *
-     * @param heatSource Heat Source
-     * @return Builder
-     */
-    //addHeatSource(String heatSource)
-
-    /**
-     * @param heatSourceDisplayItem Item displayed in JEI heat source slot
-     * @return Builder
-     */
-    //heatSourceSlotItem(ItemStack heatSourceDisplayItem)
-
-    /**
-     * @param catalystDisplayItem Item displayed in JEI catalyst slot
-     * @return Builder
-     */
-    //catalyst(ItemStack catalystDisplayItem)
-
-
-    // You can use satisfies or satisfiesIf methods to perfect the heat level network,
-    // extending the original Create mod's linear relationship levels, allowing vertical, horizontal, and cross relationships.
-
-    // Vertical Relationship: Use satisfies() to create linear hierarchy
-    // Example: TEST1 satisfies HEATED requirement (recipes requiring HEATED can use TEST1)
-    // event.registerHeat("TEST1", builder => builder.satisfies("HEATED"))
-
-    // Horizontal Relationship: Register a new level without binding to existing ones
-    // Example: COLD is independent, not satisfying any Create heat conditions
-
-    // Cross Relationship: The CRYOTHEUM level above is horizontally independent,
-    // but uses satisfies() and satisfiesIf() to cross into Create's linear relationships.
-
-
     // 3. Modify existing heat level
-    // Use modifyHeat() to add heat sources or relationships to existing heat levels
     event.modifyHeat("SUPERHEATED", data => data
-        .satisfies("TEST1") // SUPERHEATED satisfies TEST1 (recipes requiring TEST1 can use SUPERHEATED)
+        .satisfies("CUSTOM_LEVEL")
     )
 })
+
+/**
+ * Heat Source String Format:
+ * - blocktag:namespace:path (Block Tag)
+ * - fluidtag:namespace:path (Fluid Tag)
+ * - block:namespace:path (Block ID)
+ * - fluid:namespace:path (Fluid ID)
+ * - namespace:path[prop=value] (Block State)
+ * - #namespace:path (Try to match Block or Fluid Tag)
+ */
+```
+
+## Understanding `satisfies` Relationship
+
+### Basic Concept
+
+`satisfies()` establishes a **单向关系**: if `A.satisfies("B")`, then:
+- Heat source with level **A** can complete recipes requiring **B**
+- But heat source with level **B** **cannot** complete recipes requiring **A**
+
+```
+A ──satisfies──> B    means    A ≥ B
+
+Recipes need B ──> Can use A ✓
+Recipes need A ──> Cannot use B ✗
+```
+
+### Example: Create's Original Hierarchy
+
+Create mod has a built-in relationship: `SUPERHEATED → HEATED`
+
+| Recipe Requirement | Blaze Burner (HEATED) | Blaze Burner (SUPERHEATED) |
+|-------------------|----------------------|---------------------------|
+| HEATED | ✓ | ✓ |
+| SUPERHEATED | ✗ | ✓ |
+
+This means: SUPERHEATED satisfies HEATED, but HEATED does not satisfy SUPERHEATED.
+
+### Your Custom Relationships
+
+When you write:
+```js
+event.registerHeat("BLAZE", builder => builder
+    .satisfies("HEATED")
+)
+```
+
+You're creating: `BLAZE → HEATED`
+
+| Recipe Requirement | BLAZE heat source | Blaze Burner (HEATED) |
+|-------------------|-------------------|----------------------|
+| HEATED | ✓ | ✓ |
+| BLAZE | ✓ | ✗ |
+
+### Three Types of Relationships
+
+#### 1. Vertical Relationship (Linear Hierarchy)
+```js
+// Create a chain: LEVEL3 → LEVEL2 → LEVEL1
+event.registerHeat("LEVEL2", builder => builder.satisfies("LEVEL1"))
+event.registerHeat("LEVEL3", builder => builder.satisfies("LEVEL2"))
+```
+Result: LEVEL3 can satisfy LEVEL2 and LEVEL1 (transitive)
+
+#### Transitive Property (Auto-compatibility)
+
+The relationship is **transitive**. If you write:
+```js
+// Create already has: SUPERHEATED → HEATED
+// You add: PYROTHEUM → SUPERHEATED
+event.registerHeat("PYROTHEUM", builder => builder
+    .satisfies("SUPERHEATED")
+)
+```
+
+PYROTHEUM will **automatically** satisfy HEATED too! No need to write `.satisfies("HEATED")`.
+
+```
+PYROTHEUM → SUPERHEATED → HEATED
+    │           │           │
+    └───────────┴───────────┘
+         (all satisfied by PYROTHEUM)
+```
+
+| Recipe Requirement | PYROTHEUM |
+|-------------------|-----------|
+| HEATED | ✓ (auto) |
+| SUPERHEATED | ✓ |
+| PYROTHEUM | ✓ |
+
+#### 2. Horizontal Relationship (Independent System)
+```js
+// No satisfies() - completely independent
+event.registerHeat("COLD", builder => builder
+    .color(0x00BFFF)
+    .addHeatSource("#minecraft:ice")
+)
+```
+Result: COLD is independent, not connected to Create's heat system
+
+#### 3. Cross Relationship
+```js
+// CRYOTHEUM is independent but can also satisfy Create's conditions
+event.registerHeat("CRYOTHEUM", builder => builder
+    .satisfies("HEATED")  // Can satisfy HEATED recipes
+    .satisfiesIf("SUPERHEATED", ctx => ctx.getRecipeId() == "specific_recipe")
+)
+```
+Result: CRYOTHEUM is its own level, but can cross into Create's hierarchy
+
+### Relationship Diagram
+
+```
+Create's Original:
+  NONE ← HEATED ← SUPERHEATED
+         (satisfies)
+
+Your Custom:
+  BLAZE ──satisfies──> HEATED
+  (BLAZE ≥ HEATED)
+
+Combined:
+  NONE ← HEATED ← SUPERHEATED
+          ↑
+          └── BLAZE
+
+Recipes needing HEATED: Can use HEATED, SUPERHEATED, or BLAZE
+Recipes needing BLAZE:  Can only use BLAZE
+```
 ```
 
 [curseforge-badge]: https://raw.githubusercontent.com/intergrav/devins-badges/v3/assets/cozy/available/curseforge_vector.svg

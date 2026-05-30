@@ -16,7 +16,7 @@ public class HeatJSKubeJSPlugin extends KubeJSPlugin {
     }
 
     @Override
-    public void initStartup() {
+    public void afterInit() {
         HeatJSKubeJSPlugin.REGISTRY_HEAT.post(new RegisterHeatEvent());
     }
 }
